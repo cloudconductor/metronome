@@ -1,0 +1,136 @@
+variables:
+  consul_secret_key: dummy_key
+  backup_dir_master: /var/cloudconductor/backups/postgresql_master
+  backup_dir_slave: /var/cloudconductor/backups/postgresql_slave
+  restore_dir: /var/cloudconductor/backup/postgresql
+
+default:
+  timeout: 1800
+  chef_config: solo.rb
+
+tasks:
+  - name: configure
+    trigger: configure
+    description: Execute individual configure runlist
+    operations:
+      - chef: roles/{{role}}_configure.json
+
+  - name: backup_master
+    trigger: backup
+    description: Backup database on master
+    filter:
+      service: postgresql
+      tag: master
+    operations:
+      - execute: |
+          rm -rf {{backup_dir_master}} {{backup_dir_slave}}
+          sudo -u postgres pg_basebackup -D {{backup_dir_master}} --xlog --verbose -h 127.0.0.1 -U replication
+          chown -R amandabackup:disk {{backup_dir_master}}
+      - chef: amanda_part:backup
+
+  - name: backup_slave
+    trigger: backup
+    description: Backup database on slave
+    filter:
+      service: postgresql
+      tag: slave
+    operations:
+      - execute: |
+          rm -rf {{backup_dir_master}} {{backup_dir_slave}}
+          sudo -u postgres pg_basebackup -D {{backup_dir_slave}} --xlog --verbose -h 127.0.0.1 -U replication
+          chown -R amandabackup:disk {{backup_dir_slave}}
+      - chef: amanda_part:backup
+
+
+  - name: restore_master
+    trigger: restore
+    description: Restore database on master
+    filter:
+      service: postgresql
+      tag: master
+    operations:
+      - chef: amanda_part:restore
+      - consul-kvs:
+          action: put
+          key: cloudconductor/postgresql/failover-event/lock
+          value: true
+      - service:
+          name: posgresql-9.4
+          action: stop
+      - execute:
+          unix: |
+            rm -rf /var/lib/pgsql/9.4/data
+            mv {{backup_dir_master}} /var/lib/pgsql/9.4/data
+            chown -R postgres:postgres /var/lib/pgsql/9.4/data
+            chmod 700 /var/lib/pgsql/9.4/data
+            mkdir -p {{backup_dir_master}}
+            chown amandabackup:disk {{backup_dir_master}}
+            chmod 777 {{backup_dir_master}}
+          windows: |
+            del -rf /var/lib/pgsql/9.4/data
+            move {{backup_dir_master}} /var/lib/pgsql/9.4/data
+            mkdir -p {{backup_dir_master}}
+      - service:
+          name: postgresql-9.4
+          action: start
+      - consul-kvs:
+          action: delete
+          key: cloudconductor/postgresql/failover-event/lock
+      - task: configure
+      - consul-event:
+          name: restore_slave
+          filter:
+            service: postgresql
+            tag: slave
+          global: false # default false
+          sync: true    # default false
+      - consul-event-sync:
+          name: restore
+          filter:
+            service: postgresql
+            tag: slave
+      - consul-event:
+          name: configure
+          filter:
+            service: pgpool
+          sync: true
+    except:
+      - chef: amanda:cleanup
+    finally:
+      - task: failover
+
+  - name: restore_slave
+    description: Restore database from master to slave
+    filter:
+      service: postgresql
+      tag: slave
+    operations:
+      - service:
+          name: postgres
+          action: stop
+          timeout: 120
+      - execute: hoge.sh
+      - execute: |
+          json=curl http://localhost:8500/v1/catalog/service/postgresql?tag=primary
+          primary_ip=`cat $json | jq '.[] | .Address' | sed -e 's/[^"]*"\([^"]*\)".*/\1/'`
+
+          rm -rf {{restore_dir}}
+          mkdir -p {{restore_dir}}
+          chown amandabackup:disk {{restore_dir}}
+          chmod 777 {{restore_dir}}
+          sudo -u postgres pg_basebackup -D {{restore_dir}} --xlog --verbose -h {{primary_ip}} -U replication
+          rm -rf /var/lib/pgsql/9.4/data
+          mv {{restore_dir}} /var/lib/pgsql/9.4/data
+          chown -R postgres:postgres /var/lib/pgsql/9.4/data
+          chmod 700 /var/lib/pgsql/9.4/data
+          mkdir -p {{restore_dir}}
+          chown amandabackup:disk {{restore_dir}}
+          chmod 777 {{restore_dir}}
+          mv /var/lib/pgsql/9.4/data/recovery.done /var/lib/pgsql/9.4/data/recovery.conf
+          sed -ri "s/host=[^ ]+ /host={{primary_ip}} /" /var/lib/pgsql/9.4/data/recovery.conf
+      - service:
+          name: postgres
+          action: start
+
+  - name: refresh_pghba
+    descritpion: Update pg_hba.conf on postgresql
