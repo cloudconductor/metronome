@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/takama/daemon"
 )
@@ -47,15 +46,13 @@ func (service *Service) Manage() (string, error) {
 		}
 	}
 
-	go service.Run()
-	return service.WaitSignal()
-}
-
-func (service *Service) Run() {
-	for {
-		fmt.Println(time.Now())
-		time.Sleep(1 * time.Second)
+	scheduler, err := NewScheduler()
+	if err != nil {
+		return "Failed to create scheduler", err
 	}
+	go scheduler.Run()
+
+	return service.WaitSignal()
 }
 
 func (service *Service) WaitSignal() (string, error) {
