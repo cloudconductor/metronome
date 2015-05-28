@@ -14,7 +14,7 @@ func init() {
 }
 
 func main() {
-	service, err := CreateService("scheduler", "Scheduler for consul event")
+	service, err := NewService("scheduler", "Scheduler for consul event")
 	if err != nil {
 		errlog.Println("Error: ", err)
 		os.Exit(1)
