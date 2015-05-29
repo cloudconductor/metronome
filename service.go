@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,10 +19,6 @@ func NewService(name, description string) (*Service, error) {
 	}
 
 	return &Service{srv}, nil
-}
-
-func (service *Service) New() {
-	fmt.Println("service: init")
 }
 
 func (service *Service) Manage() (string, error) {
