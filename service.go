@@ -52,10 +52,10 @@ func (service *Service) Manage() (string, error) {
 	}
 	go scheduler.Run()
 
-	return service.WaitSignal()
+	return service.waitSignal()
 }
 
-func (service *Service) WaitSignal() (string, error) {
+func (service *Service) waitSignal() (string, error) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
