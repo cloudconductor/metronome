@@ -1,4 +1,4 @@
-package main
+package scheduler
 
 import (
 	"fmt"
@@ -8,8 +8,10 @@ import (
 type Scheduler struct {
 }
 
-func NewScheduler() (*Scheduler, error) {
-	return &Scheduler{}, nil
+func NewScheduler(path string) (*Scheduler, error) {
+	scheduler := &Scheduler{}
+
+	return scheduler, nil
 }
 
 func (scheduler *Scheduler) Run() {

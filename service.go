@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"os/signal"
+	"scheduler/scheduler"
 	"syscall"
 
 	"github.com/takama/daemon"
@@ -41,7 +42,7 @@ func (service *Service) Manage() (string, error) {
 		}
 	}
 
-	scheduler, err := NewScheduler()
+	scheduler, err := scheduler.NewScheduler()
 	if err != nil {
 		return "Failed to create scheduler", err
 	}
