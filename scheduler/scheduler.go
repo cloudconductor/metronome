@@ -35,7 +35,5 @@ func (scheduler *Scheduler) load(path string) error {
 	if err != nil {
 		return errors.New(fmt.Sprintf("Failed to load config file(%s)", path))
 	}
-	yaml.Unmarshal([]byte(d), &scheduler.config)
-
-	return nil
+	return yaml.Unmarshal([]byte(d), &scheduler.config)
 }
