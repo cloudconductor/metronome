@@ -65,3 +65,13 @@ func (t *Task) unmarshalOperations(d []byte) error {
 	}
 	return nil
 }
+
+func (t *Task) Run() error {
+	for _, o := range t.Operations {
+		err := o.Run()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
