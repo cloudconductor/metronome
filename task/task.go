@@ -2,7 +2,6 @@ package task
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"scheduler/operation"
 )
@@ -20,50 +19,38 @@ type Filter struct {
 	Tag     string
 }
 
-func (t *Task) UnmarshalJSON(d []byte) error {
-	m := make(map[string]json.RawMessage)
-	err := json.Unmarshal(d, &m)
-	if err != nil {
-		return err
-	}
-
-	t.Name = string(m["name"])
-	t.Trigger = string(m["trigger"])
-	t.Description = string(m["description"])
-	err = json.Unmarshal([]byte(m["filter"]), &t.Filter)
-	if err != nil {
-		return err
-	}
-
-	err = t.unmarshalOperations([]byte(m["operations"]))
-	return err
+type unmarshalContext struct {
+	err error
 }
 
-func (t *Task) unmarshalOperations(d []byte) error {
-	var list []map[string]json.RawMessage
-	err := json.Unmarshal(d, &list)
-	if err != nil {
-		return err
+func (u *unmarshalContext) unmarshal(data []byte, v interface{}) error {
+	if u.err != nil {
+		return u.err
 	}
+	u.err = json.Unmarshal(data, v)
+	return u.err
+}
 
-	for _, m := range list {
-		if len(m) != 1 {
-			return errors.New("Operation has multiple types")
-		}
-
-		for k, v := range m {
-			factory, ok := operation.Operations[k]
-			if !ok {
-				return errors.New(fmt.Sprintf("Operation %s is not defined", k))
-			}
-			operation, err := factory(v)
-			if err != nil {
-				return err
-			}
-			t.Operations = append(t.Operations, operation)
-		}
+func (u *unmarshalContext) unmarshalOperations(data []byte, v *[]operation.Operation) error {
+	if u.err != nil {
+		return u.err
 	}
-	return nil
+	u.err = operation.UnmarshalOperations(data, v)
+	return u.err
+}
+
+func (t *Task) UnmarshalJSON(d []byte) error {
+	m := make(map[string]json.RawMessage)
+	u := &unmarshalContext{}
+	u.unmarshal(d, &m)
+	u.unmarshal([]byte(m["name"]), &t.Name)
+	u.unmarshal([]byte(m["trigger"]), &t.Trigger)
+	u.unmarshal([]byte(m["description"]), &t.Description)
+	u.unmarshal([]byte(m["filter"]), &t.Filter)
+	u.unmarshalOperations([]byte(m["operations"]), &t.Operations)
+
+	fmt.Printf("Loaded %v\n", t)
+	return u.err
 }
 
 func (t *Task) Run() error {
