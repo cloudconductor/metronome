@@ -75,3 +75,18 @@ func (t *Task) Run() error {
 	}
 	return nil
 }
+
+func (t *Task) String() string {
+	var s string
+
+	s += fmt.Sprintf("Task %s\n", t.Name)
+	s += fmt.Sprintf("  Trigger: %s\n", t.Trigger)
+	s += fmt.Sprintf("  Description: %s\n", t.Description)
+	s += fmt.Sprintf("  Filter: %v\n", t.Filter)
+
+	s += "  Operations:\n"
+	for _, o := range t.Operations {
+		s += fmt.Sprintf("    %s\n", o.Name())
+	}
+	return s
+}
