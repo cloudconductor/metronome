@@ -13,9 +13,7 @@ var Operations map[string]OperationFactory
 func init() {
 	Operations = map[string]OperationFactory{
 		"echo": func(v json.RawMessage) (Operation, error) {
-			var s string
-			json.Unmarshal(v, &s)
-			return &EchoOperation{message: s}, nil
+			return NewEchoOperation(v), nil
 		},
 	}
 }
