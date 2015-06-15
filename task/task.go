@@ -54,12 +54,14 @@ func (t *Task) UnmarshalJSON(d []byte) error {
 }
 
 func (t *Task) Run() error {
+	fmt.Printf("Task %s has started\n", t.Name)
 	for _, o := range t.Operations {
 		err := o.Run()
 		if err != nil {
 			return err
 		}
 	}
+	fmt.Printf("Task %s has finished\n", t.Name)
 	return nil
 }
 
