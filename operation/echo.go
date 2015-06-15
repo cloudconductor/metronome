@@ -15,12 +15,12 @@ func NewEchoOperation(v json.RawMessage) *EchoOperation {
 	return o
 }
 
-func (t *EchoOperation) Run() error {
+func (o *EchoOperation) Run() error {
 	fmt.Println("-----------echo")
-	fmt.Println(t.message)
+	fmt.Println(o.message)
 	return nil
 }
 
-func (t *EchoOperation) Name() string {
+func (o *EchoOperation) Name() string {
 	return "echo"
 }
