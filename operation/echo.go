@@ -1,8 +1,6 @@
 package operation
 
-import (
-	"fmt"
-)
+import "fmt"
 
 type EchoOperation struct {
 	message string
