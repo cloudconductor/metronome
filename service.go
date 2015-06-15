@@ -46,7 +46,7 @@ func (service *Service) Manage() (string, error) {
 		}
 	}
 
-	scheduler, err := scheduler.NewScheduler("sample.yml", config)
+	scheduler, err := scheduler.NewScheduler(config)
 	if err != nil {
 		return "Failed to create scheduler", err
 	}

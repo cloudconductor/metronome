@@ -19,9 +19,9 @@ type Scheduler struct {
 	client   *api.Client
 }
 
-func NewScheduler(path string, config *Config) (*Scheduler, error) {
+func NewScheduler(config *Config) (*Scheduler, error) {
 	scheduler := &Scheduler{}
-	err := scheduler.load(path)
+	err := scheduler.load(config.ScheduleFile)
 	if err != nil {
 		return nil, err
 	}

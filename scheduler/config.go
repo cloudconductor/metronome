@@ -8,6 +8,8 @@ type Config struct {
 	Token              string
 	Protocol           string
 	InsecureSkipVerify bool
+
+	ScheduleFile string
 }
 
 func (c *Config) Load() {
@@ -16,5 +18,7 @@ func (c *Config) Load() {
 	flag.StringVar(&c.Protocol, "protocol", "https", "Consul protocol (http / https)")
 	flag.StringVar(&c.Token, "token", "", "Consul ACL token")
 	flag.BoolVar(&c.InsecureSkipVerify, "insecure-skip-verify", false, "Skip server verification on SSL/TLS")
+
+	flag.StringVar(&c.ScheduleFile, "schedule-file", "task.yml", "Load schedule from this file")
 	flag.Parse()
 }
