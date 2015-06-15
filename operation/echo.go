@@ -5,10 +5,12 @@ import (
 )
 
 type EchoOperation struct {
+	message string
 }
 
 func (t *EchoOperation) Run() error {
-	fmt.Println("echo")
+	fmt.Println("-----------echo")
+	fmt.Println(t.message)
 	return nil
 }
 
