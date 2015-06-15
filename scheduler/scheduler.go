@@ -10,7 +10,7 @@ import (
 )
 
 type Scheduler struct {
-	config Config
+	schedule Schedule
 }
 
 func NewScheduler(path string) (*Scheduler, error) {
@@ -35,5 +35,5 @@ func (scheduler *Scheduler) load(path string) error {
 	if err != nil {
 		return errors.New(fmt.Sprintf("Failed to load config file(%s)", path))
 	}
-	return yaml.Unmarshal([]byte(d), &scheduler.config)
+	return yaml.Unmarshal([]byte(d), &scheduler.schedule)
 }

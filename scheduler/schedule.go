@@ -2,7 +2,7 @@ package scheduler
 
 import "scheduler/task"
 
-type Config struct {
+type Schedule struct {
 	Variables map[string]string
 	Default   TaskDefault
 	Tasks     []task.Task
