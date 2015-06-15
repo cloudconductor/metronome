@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"os/signal"
 	"scheduler/scheduler"
@@ -25,8 +26,11 @@ func NewService(name, description string) (*Service, error) {
 func (service *Service) Manage() (string, error) {
 	usage := "Usage: scheduler install | remove | start | stop | status"
 
-	if len(os.Args) > 1 {
-		switch os.Args[1] {
+	config := &scheduler.Config{}
+	config.Load()
+
+	if flag.NArg() > 0 {
+		switch flag.Args()[0] {
 		case "install":
 			return service.Install()
 		case "remove":
