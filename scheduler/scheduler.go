@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"scheduler/task"
 	"time"
 
 	"github.com/ghodss/yaml"
@@ -35,8 +36,22 @@ func NewScheduler(path string, config *Config) (*Scheduler, error) {
 }
 
 func (scheduler *Scheduler) Run() {
+	eq := &Queue{Client: scheduler.client, Node: "dummy"}
+
 	for {
 		fmt.Println(time.Now())
+		item, err := eq.DeQueue()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		if item != nil {
+			err = scheduler.dispatch(item.Type)
+			if err != nil {
+				fmt.Println(err)
+			}
+			fmt.Printf("Receive item %s\n", item.Type)
+		}
 		time.Sleep(1 * time.Second)
 	}
 }
@@ -63,4 +78,22 @@ func (scheduler *Scheduler) connect(config *Config) error {
 	client, err := api.NewClient(consul)
 	scheduler.client = client
 	return err
+}
+
+func (scheduler *Scheduler) dispatch(trigger string) error {
+	task, found := scheduler.find(trigger)
+	if !found {
+		return errors.New(fmt.Sprintf("Task %s is not defined", trigger))
+	}
+
+	return task.Run()
+}
+
+func (scheduler *Scheduler) find(trigger string) (*task.Task, bool) {
+	for _, t := range scheduler.schedule.Tasks {
+		if t.Trigger == trigger {
+			return &t, true
+		}
+	}
+	return nil, false
 }
