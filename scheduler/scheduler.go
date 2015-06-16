@@ -47,11 +47,11 @@ func (scheduler *Scheduler) Run() {
 			return
 		}
 		if item != nil {
+			fmt.Printf("Receive item %s\n", item.Type)
 			err = scheduler.dispatch(item.Type)
 			if err != nil {
 				fmt.Println(err)
 			}
-			fmt.Printf("Receive item %s\n", item.Type)
 		}
 		time.Sleep(1 * time.Second)
 	}

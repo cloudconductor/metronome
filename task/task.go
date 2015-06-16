@@ -58,6 +58,7 @@ func (t *Task) Run() error {
 	for _, o := range t.Operations {
 		err := o.Run()
 		if err != nil {
+			fmt.Printf("Task %s has failed\n", t.Name)
 			return err
 		}
 	}
