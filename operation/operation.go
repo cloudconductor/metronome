@@ -1,6 +1,6 @@
 package operation
 
 type Operation interface {
-	Name() string
+	String() string
 	Run() error
 }

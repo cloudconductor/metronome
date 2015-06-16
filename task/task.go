@@ -75,7 +75,7 @@ func (t *Task) String() string {
 
 	s += "  Operations:\n"
 	for _, o := range t.Operations {
-		s += fmt.Sprintf("    %s\n", o.Name())
+		s += fmt.Sprintf("    %v\n", o)
 	}
 	return s
 }

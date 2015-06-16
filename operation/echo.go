@@ -21,6 +21,6 @@ func (o *EchoOperation) Run() error {
 	return nil
 }
 
-func (o *EchoOperation) Name() string {
+func (o *EchoOperation) String() string {
 	return "echo"
 }
