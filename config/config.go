@@ -14,6 +14,8 @@ var (
 	InsecureSkipVerify bool
 
 	ScheduleFile string
+
+	ServiceManager string
 )
 
 func init() {
@@ -24,6 +26,8 @@ func init() {
 	flag.BoolVar(&InsecureSkipVerify, "insecure-skip-verify", false, "Skip server verification on SSL/TLS")
 
 	flag.StringVar(&ScheduleFile, "schedule-file", "task.yml", "Load schedule from this file")
+
+	flag.StringVar(&ServiceManager, "service-manager", "init", "Service manager(systemd / init)")
 
 	if args, err := conflag.ArgsFrom("/etc/scheduler/config.yml"); err == nil {
 		flag.CommandLine.Parse(args)

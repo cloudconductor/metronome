@@ -15,6 +15,9 @@ func init() {
 		"echo": func(v json.RawMessage) (Operation, error) {
 			return NewEchoOperation(v), nil
 		},
+		"service": func(v json.RawMessage) (Operation, error) {
+			return NewServiceOperation(v), nil
+		},
 	}
 }
 
