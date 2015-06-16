@@ -26,9 +26,6 @@ func NewService(name, description string) (*Service, error) {
 func (service *Service) Manage() (string, error) {
 	usage := "Usage: scheduler install | remove | start | stop | status"
 
-	config := &scheduler.Config{}
-	config.Load()
-
 	if flag.NArg() > 0 {
 		switch flag.Args()[0] {
 		case "install":
@@ -46,7 +43,7 @@ func (service *Service) Manage() (string, error) {
 		}
 	}
 
-	scheduler, err := scheduler.NewScheduler(config)
+	scheduler, err := scheduler.NewScheduler()
 	if err != nil {
 		return "Failed to create scheduler", err
 	}

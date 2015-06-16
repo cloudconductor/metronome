@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"scheduler/config"
 	"scheduler/task"
 	"time"
 
@@ -19,14 +20,14 @@ type Scheduler struct {
 	client   *api.Client
 }
 
-func NewScheduler(config *Config) (*Scheduler, error) {
+func NewScheduler() (*Scheduler, error) {
 	scheduler := &Scheduler{}
-	err := scheduler.load(config.ScheduleFile)
+	err := scheduler.load()
 	if err != nil {
 		return nil, err
 	}
 
-	err = scheduler.connect(config)
+	err = scheduler.connect()
 	if err != nil {
 		fmt.Println("Failed to create consul.Client")
 		return nil, err
@@ -56,7 +57,8 @@ func (scheduler *Scheduler) Run() {
 	}
 }
 
-func (scheduler *Scheduler) load(path string) error {
+func (scheduler *Scheduler) load() error {
+	path := config.ScheduleFile
 	d, err := ioutil.ReadFile(path)
 	if err != nil {
 		return errors.New(fmt.Sprintf("Failed to load config file(%s)", path))
@@ -64,10 +66,10 @@ func (scheduler *Scheduler) load(path string) error {
 	return yaml.Unmarshal([]byte(d), &scheduler.schedule)
 }
 
-func (scheduler *Scheduler) connect(config *Config) error {
+func (scheduler *Scheduler) connect() error {
 	consul := api.DefaultConfig()
-	consul.Address = fmt.Sprintf("%s:%d", config.Hostname, config.Port)
 	consul.Token = config.Token
+	consul.Address = fmt.Sprintf("%s:%d", config.Hostname, config.Port)
 	consul.Scheme = config.Protocol
 	consul.HttpClient.Transport = &http.Transport{
 		TLSClientConfig: &tls.Config{
