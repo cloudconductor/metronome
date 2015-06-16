@@ -1,6 +1,10 @@
 package config
 
-import "flag"
+import (
+	"flag"
+
+	"github.com/monochromegane/conflag"
+)
 
 var (
 	Token              string
@@ -20,5 +24,10 @@ func init() {
 	flag.BoolVar(&InsecureSkipVerify, "insecure-skip-verify", false, "Skip server verification on SSL/TLS")
 
 	flag.StringVar(&ScheduleFile, "schedule-file", "task.yml", "Load schedule from this file")
+
+	if args, err := conflag.ArgsFrom("/etc/scheduler/config.yml"); err == nil {
+		flag.CommandLine.Parse(args)
+	}
+
 	flag.Parse()
 }
