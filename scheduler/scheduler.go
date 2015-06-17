@@ -102,7 +102,7 @@ func (scheduler *Scheduler) dispatch(trigger string) error {
 		return errors.New(fmt.Sprintf("Task %s is not defined", trigger))
 	}
 	for _, t := range tasks {
-		if err := t.Run(); err != nil {
+		if err := t.Run(scheduler.schedule.Variables); err != nil {
 			return err
 		}
 	}

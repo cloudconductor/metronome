@@ -19,7 +19,7 @@ func NewServiceOperation(v json.RawMessage) *ServiceOperation {
 	return o
 }
 
-func (o *ServiceOperation) Run() error {
+func (o *ServiceOperation) Run(m map[string]string) error {
 	var cmd *exec.Cmd
 	switch config.ServiceManager {
 	case "init":

@@ -2,5 +2,5 @@ package operation
 
 type Operation interface {
 	String() string
-	Run() error
+	Run(m map[string]string) error
 }
