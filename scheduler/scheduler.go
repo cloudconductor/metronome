@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"scheduler/config"
 	"scheduler/task"
+	"strings"
 	"time"
 
 	"github.com/ghodss/yaml"
@@ -18,6 +20,7 @@ import (
 type Scheduler struct {
 	schedule Schedule
 	client   *api.Client
+	node     string
 }
 
 func NewScheduler() (*Scheduler, error) {
@@ -29,7 +32,6 @@ func NewScheduler() (*Scheduler, error) {
 
 	err = scheduler.connect()
 	if err != nil {
-		fmt.Println("Failed to create consul.Client")
 		return nil, err
 	}
 
@@ -37,7 +39,7 @@ func NewScheduler() (*Scheduler, error) {
 }
 
 func (scheduler *Scheduler) Run() {
-	eq := &Queue{Client: scheduler.client, Node: config.Node}
+	eq := &Queue{Client: scheduler.client, Node: scheduler.node}
 
 	for {
 		fmt.Println(time.Now())
@@ -77,8 +79,20 @@ func (scheduler *Scheduler) connect() error {
 		},
 	}
 
-	client, err := api.NewClient(consul)
-	scheduler.client = client
+	var err error
+	scheduler.client, err = api.NewClient(consul)
+	if err != nil {
+		fmt.Println("Failed to create consul.Client")
+		return err
+	}
+
+	if config.Node != "" {
+		scheduler.node = config.Node
+		return nil
+	}
+
+	fmt.Println("Node does not set, will search self ip address from consul catalog")
+	scheduler.node, err = scheduler.findSelfNode()
 	return err
 }
 
@@ -98,4 +112,28 @@ func (scheduler *Scheduler) find(trigger string) (*task.Task, bool) {
 		}
 	}
 	return nil, false
+}
+
+func (scheduler *Scheduler) findSelfNode() (string, error) {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return "", err
+	}
+
+	nodes, _, err := scheduler.client.Catalog().Nodes(&api.QueryOptions{})
+	if err != nil {
+		return "", err
+	}
+	for _, n := range nodes {
+		for _, a := range addrs {
+			h := strings.Split(a.String(), "/")[0]
+			fmt.Printf("Addresses = %s\t", h)
+			fmt.Printf("Nodes= %s\n", n.Address)
+			if n.Address == h {
+				return n.Node, nil
+			}
+		}
+	}
+
+	return "", errors.New("Current system ip address does not found in consul catalog")
 }

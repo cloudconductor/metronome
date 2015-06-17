@@ -21,7 +21,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&Node, "node", "", "Node name of this server on consul")
+	flag.StringVar(&Node, "node", "", "Node name of this server on consul(default: Retrieve node from consul catalog)")
 
 	flag.StringVar(&Token, "token", "", "Consul ACL token")
 	flag.StringVar(&Hostname, "host", "127.0.0.1", "Consul host")
