@@ -3,6 +3,7 @@ package operation
 import (
 	"encoding/json"
 	"fmt"
+	"scheduler/util"
 )
 
 type EchoOperation struct {
@@ -16,8 +17,7 @@ func NewEchoOperation(v json.RawMessage) *EchoOperation {
 }
 
 func (o *EchoOperation) Run(m map[string]string) error {
-	fmt.Println("-----------echo")
-	fmt.Println(o.message)
+	fmt.Println(util.Parse(o.message, m))
 	return nil
 }
 
