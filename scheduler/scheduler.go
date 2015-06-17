@@ -97,21 +97,27 @@ func (scheduler *Scheduler) connect() error {
 }
 
 func (scheduler *Scheduler) dispatch(trigger string) error {
-	task, found := scheduler.find(trigger)
-	if !found {
+	tasks := scheduler.filter(trigger)
+	if len(tasks) == 0 {
 		return errors.New(fmt.Sprintf("Task %s is not defined", trigger))
 	}
-
-	return task.Run()
-}
-
-func (scheduler *Scheduler) find(trigger string) (*task.Task, bool) {
-	for _, t := range scheduler.schedule.Tasks {
-		if t.Trigger == trigger {
-			return &t, true
+	for _, t := range tasks {
+		if err := t.Run(); err != nil {
+			return err
 		}
 	}
-	return nil, false
+
+	return nil
+}
+
+func (scheduler *Scheduler) filter(trigger string) []task.Task {
+	var tasks []task.Task
+	for _, t := range scheduler.schedule.Tasks {
+		if t.Trigger == trigger {
+			tasks = append(tasks, t)
+		}
+	}
+	return tasks
 }
 
 func (scheduler *Scheduler) findSelfNode() (string, error) {
