@@ -37,7 +37,7 @@ func NewScheduler() (*Scheduler, error) {
 }
 
 func (scheduler *Scheduler) Run() {
-	eq := &Queue{Client: scheduler.client, Node: "dummy"}
+	eq := &Queue{Client: scheduler.client, Node: config.Node}
 
 	for {
 		fmt.Println(time.Now())

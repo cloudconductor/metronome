@@ -7,6 +7,8 @@ import (
 )
 
 var (
+	Node string
+
 	Token              string
 	Hostname           string
 	Port               int
@@ -19,6 +21,8 @@ var (
 )
 
 func init() {
+	flag.StringVar(&Node, "node", "", "Node name of this server on consul")
+
 	flag.StringVar(&Token, "token", "", "Consul ACL token")
 	flag.StringVar(&Hostname, "host", "127.0.0.1", "Consul host")
 	flag.IntVar(&Port, "port", 8500, "Consul port")
