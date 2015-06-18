@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os/exec"
 	"scheduler/config"
+	"scheduler/util"
 )
 
 type ServiceOperation struct {
@@ -20,12 +21,15 @@ func NewServiceOperation(v json.RawMessage) *ServiceOperation {
 }
 
 func (o *ServiceOperation) Run(m map[string]string) error {
+	name := util.ParseString(o.Name, m)
+	action := util.ParseString(o.Action, m)
+
 	var cmd *exec.Cmd
 	switch config.ServiceManager {
 	case "init":
-		cmd = exec.Command("/sbin/service", o.Name, o.Action)
+		cmd = exec.Command("/sbin/service", name, action)
 	case "systemd":
-		cmd = exec.Command("/sbin/systemctl", o.Action, o.Name)
+		cmd = exec.Command("/sbin/systemctl", action, name)
 	default:
 		return errors.New(fmt.Sprintf("Unknown service manager(%s)", config.ServiceManager))
 	}
