@@ -17,7 +17,7 @@ func NewEchoOperation(v json.RawMessage) *EchoOperation {
 }
 
 func (o *EchoOperation) Run(m map[string]string) error {
-	fmt.Println(util.Parse(o.message, m))
+	fmt.Println(util.ParseString(o.message, m))
 	return nil
 }
 

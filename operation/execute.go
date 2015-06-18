@@ -20,7 +20,7 @@ func NewExecuteOperation(v json.RawMessage) *ExecuteOperation {
 }
 
 func (o *ExecuteOperation) Run(m map[string]string) error {
-	s := util.Parse(o.Script, m)
+	s := util.ParseString(o.Script, m)
 
 	cmd := exec.Command(os.Getenv("SHELL"))
 	cmd.Stdin = strings.NewReader(s)
