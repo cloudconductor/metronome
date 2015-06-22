@@ -20,9 +20,9 @@ func NewServiceOperation(v json.RawMessage) *ServiceOperation {
 	return o
 }
 
-func (o *ServiceOperation) Run(m map[string]string) error {
-	name := util.ParseString(o.Name, m)
-	action := util.ParseString(o.Action, m)
+func (o *ServiceOperation) Run(vars map[string]string) error {
+	name := util.ParseString(o.Name, vars)
+	action := util.ParseString(o.Action, vars)
 
 	var cmd *exec.Cmd
 	switch config.ServiceManager {

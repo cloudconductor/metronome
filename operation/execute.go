@@ -19,8 +19,8 @@ func NewExecuteOperation(v json.RawMessage) *ExecuteOperation {
 	return o
 }
 
-func (o *ExecuteOperation) Run(m map[string]string) error {
-	s := util.ParseString(o.Script, m)
+func (o *ExecuteOperation) Run(vars map[string]string) error {
+	s := util.ParseString(o.Script, vars)
 
 	cmd := exec.Command(os.Getenv("SHELL"))
 	cmd.Stdin = strings.NewReader(s)
