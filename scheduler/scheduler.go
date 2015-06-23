@@ -106,9 +106,9 @@ func (scheduler *Scheduler) connect() error {
 		return nil
 	}
 
-	fmt.Println("Node does not set, will search self ip address from consul catalog")
 	var err error
 	scheduler.node, err = scheduler.findSelfNode()
+	fmt.Printf("Node does not set, self node is registered as %s in consul catalog\n", scheduler.node)
 	return err
 }
 
@@ -151,8 +151,6 @@ func (scheduler *Scheduler) findSelfNode() (string, error) {
 	for _, n := range nodes {
 		for _, a := range addrs {
 			h := strings.Split(a.String(), "/")[0]
-			fmt.Printf("Addresses = %s\t", h)
-			fmt.Printf("Nodes= %s\n", n.Address)
 			if n.Address == h {
 				return n.Node, nil
 			}
