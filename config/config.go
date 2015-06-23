@@ -15,8 +15,6 @@ var (
 	Protocol           string
 	InsecureSkipVerify bool
 
-	ScheduleFile string
-
 	ServiceManager string
 
 	BaseDir string
@@ -30,8 +28,6 @@ func init() {
 	flag.IntVar(&Port, "port", 8500, "Consul port")
 	flag.StringVar(&Protocol, "protocol", "https", "Consul protocol (http / https)")
 	flag.BoolVar(&InsecureSkipVerify, "insecure-skip-verify", false, "Skip server verification on SSL/TLS")
-
-	flag.StringVar(&ScheduleFile, "schedule-file", "task.yml", "Load schedule from this file")
 
 	flag.StringVar(&ServiceManager, "service-manager", "init", "Service manager(systemd / init)")
 
