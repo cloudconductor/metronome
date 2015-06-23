@@ -1,12 +1,10 @@
 package scheduler
 
 import (
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
-	"net/http"
 	"path/filepath"
 	"scheduler/config"
 	"scheduler/task"
@@ -101,22 +99,7 @@ func (scheduler *Scheduler) load() error {
 }
 
 func (scheduler *Scheduler) connect() error {
-	consul := api.DefaultConfig()
-	consul.Token = config.Token
-	consul.Address = fmt.Sprintf("%s:%d", config.Hostname, config.Port)
-	consul.Scheme = config.Protocol
-	consul.HttpClient.Transport = &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: config.InsecureSkipVerify,
-		},
-	}
-
-	var err error
-	scheduler.client, err = api.NewClient(consul)
-	if err != nil {
-		fmt.Println("Failed to create consul.Client")
-		return err
-	}
+	scheduler.client = util.Consul()
 
 	if config.Node != "" {
 		scheduler.node = config.Node
@@ -124,6 +107,7 @@ func (scheduler *Scheduler) connect() error {
 	}
 
 	fmt.Println("Node does not set, will search self ip address from consul catalog")
+	var err error
 	scheduler.node, err = scheduler.findSelfNode()
 	return err
 }
