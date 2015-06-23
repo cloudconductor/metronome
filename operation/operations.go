@@ -12,6 +12,9 @@ var Operations map[string]OperationFactory
 
 func init() {
 	Operations = map[string]OperationFactory{
+		"chef": func(v json.RawMessage) (Operation, error) {
+			return NewChefOperation(v), nil
+		},
 		"echo": func(v json.RawMessage) (Operation, error) {
 			return NewEchoOperation(v), nil
 		},
