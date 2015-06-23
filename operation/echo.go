@@ -7,6 +7,7 @@ import (
 )
 
 type EchoOperation struct {
+	BaseOperation
 	message string
 }
 

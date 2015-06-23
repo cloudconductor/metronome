@@ -10,6 +10,7 @@ import (
 )
 
 type ServiceOperation struct {
+	BaseOperation
 	Name   string
 	Action string
 }

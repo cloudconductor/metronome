@@ -10,6 +10,7 @@ import (
 )
 
 type ExecuteOperation struct {
+	BaseOperation
 	Script string
 }
 

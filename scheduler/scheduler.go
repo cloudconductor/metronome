@@ -94,8 +94,8 @@ func (scheduler *Scheduler) load() error {
 		if err != nil {
 			return errors.New(fmt.Sprintf("Failed to unmarshal json(%s)", path))
 		}
+		schedule.SetPattern(e.Name())
 		scheduler.schedules[e.Name()] = schedule
-		fmt.Println(schedule)
 	}
 	return nil
 }

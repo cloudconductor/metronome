@@ -7,6 +7,7 @@ import (
 )
 
 type Task struct {
+	pattern     string
 	Name        string
 	Trigger     string
 	Description string
@@ -51,6 +52,13 @@ func (t *Task) UnmarshalJSON(d []byte) error {
 
 	fmt.Printf("Loaded %v\n", t)
 	return u.err
+}
+
+func (t *Task) SetPattern(pattern string) {
+	t.pattern = pattern
+	for _, o := range t.Operations {
+		o.SetPattern(pattern)
+	}
 }
 
 func (t *Task) Run(vars map[string]string) error {
