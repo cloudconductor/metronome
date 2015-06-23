@@ -7,8 +7,10 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"path/filepath"
 	"scheduler/config"
 	"scheduler/task"
+	"scheduler/util"
 	"strings"
 	"time"
 
@@ -18,13 +20,20 @@ import (
 )
 
 type Scheduler struct {
-	schedule Schedule
-	client   *api.Client
-	node     string
+	schedules map[string]Schedule
+	client    *api.Client
+	node      string
+}
+
+type DispatchTask struct {
+	pattern string
+	task    task.Task
 }
 
 func NewScheduler() (*Scheduler, error) {
 	scheduler := &Scheduler{}
+	scheduler.schedules = make(map[string]Schedule)
+
 	err := scheduler.load()
 	if err != nil {
 		return nil, err
@@ -60,12 +69,35 @@ func (scheduler *Scheduler) Run() {
 }
 
 func (scheduler *Scheduler) load() error {
-	path := config.ScheduleFile
-	d, err := ioutil.ReadFile(path)
+	entries, err := ioutil.ReadDir(filepath.Join(config.BaseDir, "patterns"))
 	if err != nil {
-		return errors.New(fmt.Sprintf("Failed to load config file(%s)", path))
+		return err
 	}
-	return yaml.Unmarshal([]byte(d), &scheduler.schedule)
+
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+
+		path := filepath.Join(config.BaseDir, "patterns", e.Name(), "task.yml")
+		if !util.Exists(path) {
+			fmt.Printf("Schedule file does not found(%s)\n", path)
+			continue
+		}
+
+		d, err := ioutil.ReadFile(path)
+		if err != nil {
+			return errors.New(fmt.Sprintf("Failed to load config file(%s)", path))
+		}
+		var schedule Schedule
+		err = yaml.Unmarshal([]byte(d), &schedule)
+		if err != nil {
+			return errors.New(fmt.Sprintf("Failed to unmarshal json(%s)", path))
+		}
+		scheduler.schedules[e.Name()] = schedule
+		fmt.Println(schedule)
+	}
+	return nil
 }
 
 func (scheduler *Scheduler) connect() error {
@@ -102,7 +134,7 @@ func (scheduler *Scheduler) dispatch(trigger string) error {
 		return errors.New(fmt.Sprintf("Task %s is not defined", trigger))
 	}
 	for _, t := range tasks {
-		if err := t.Run(scheduler.schedule.Variables); err != nil {
+		if err := t.task.Run(scheduler.schedules[t.pattern].Variables); err != nil {
 			return err
 		}
 	}
@@ -110,11 +142,13 @@ func (scheduler *Scheduler) dispatch(trigger string) error {
 	return nil
 }
 
-func (scheduler *Scheduler) filter(trigger string) []task.Task {
-	var tasks []task.Task
-	for _, t := range scheduler.schedule.Tasks {
-		if t.Trigger == trigger {
-			tasks = append(tasks, t)
+func (scheduler *Scheduler) filter(trigger string) []DispatchTask {
+	var tasks []DispatchTask
+	for k, v := range scheduler.schedules {
+		for _, t := range v.Tasks {
+			if t.Trigger == trigger {
+				tasks = append(tasks, DispatchTask{pattern: k, task: t})
+			}
 		}
 	}
 	return tasks
