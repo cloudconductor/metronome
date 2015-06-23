@@ -85,12 +85,12 @@ func (scheduler *Scheduler) load() error {
 
 		d, err := ioutil.ReadFile(path)
 		if err != nil {
-			return errors.New(fmt.Sprintf("Failed to load config file(%s)", path))
+			return errors.New(fmt.Sprintf("Failed to load config file(%s)\n\t%s", path, err))
 		}
 		var schedule Schedule
 		err = yaml.Unmarshal([]byte(d), &schedule)
 		if err != nil {
-			return errors.New(fmt.Sprintf("Failed to unmarshal json(%s)", path))
+			return errors.New(fmt.Sprintf("Failed to unmarshal json(%s)\n\t%s", path, err))
 		}
 		schedule.SetPattern(e.Name())
 		scheduler.schedules[e.Name()] = schedule
