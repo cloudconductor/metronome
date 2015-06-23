@@ -18,6 +18,8 @@ var (
 	ScheduleFile string
 
 	ServiceManager string
+
+	BaseDir string
 )
 
 func init() {
@@ -32,6 +34,8 @@ func init() {
 	flag.StringVar(&ScheduleFile, "schedule-file", "task.yml", "Load schedule from this file")
 
 	flag.StringVar(&ServiceManager, "service-manager", "init", "Service manager(systemd / init)")
+
+	flag.StringVar(&BaseDir, "base-dir", "/opt/cloudconductor", "CloudConductor base dir(default: /opt/cloudconductor))")
 
 	if args, err := conflag.ArgsFrom("/etc/scheduler/config.yml"); err == nil {
 		flag.CommandLine.Parse(args)
