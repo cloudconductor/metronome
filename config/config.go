@@ -2,11 +2,14 @@ package config
 
 import (
 	"flag"
+	"strings"
 
 	"github.com/monochromegane/conflag"
 )
 
 var (
+	UserVariables stringMapValue
+
 	Node string
 
 	Token              string
@@ -21,6 +24,8 @@ var (
 )
 
 func init() {
+	flag.Var(&UserVariables, "var", "specify a user variable")
+
 	flag.StringVar(&Node, "node", "", "Node name of this server on consul(default: Retrieve node from consul catalog)")
 
 	flag.StringVar(&Token, "token", "", "Consul ACL token")
@@ -38,4 +43,19 @@ func init() {
 	}
 
 	flag.Parse()
+}
+
+type stringMapValue map[string]string
+
+func (v *stringMapValue) String() string {
+	return ""
+}
+
+func (v *stringMapValue) Set(s string) error {
+	if *v == nil {
+		*v = make(map[string]string)
+	}
+	items := strings.Split(s, "=")
+	(*v)[items[0]] = items[1]
+	return nil
 }

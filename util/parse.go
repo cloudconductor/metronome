@@ -1,6 +1,11 @@
 package util
 
-import "regexp"
+import (
+	"regexp"
+	"scheduler/config"
+
+	"github.com/imdario/mergo"
+)
 
 func Parse(src interface{}, vars map[string]string) interface{} {
 	switch src := src.(type) {
@@ -16,6 +21,8 @@ func Parse(src interface{}, vars map[string]string) interface{} {
 }
 
 func ParseString(src string, vars map[string]string) string {
+	mergo.Merge(&vars, map[string]string(config.UserVariables))
+
 	r, _ := regexp.Compile("{{([^{}]+)}}")
 	for prev := ""; prev != src; {
 		prev = src
