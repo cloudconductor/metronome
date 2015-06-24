@@ -157,7 +157,7 @@ func (scheduler *Scheduler) findSelfNode() (string, error) {
 	return "", errors.New("Current system ip address does not found in consul catalog")
 }
 
-func (scheduler *Scheduler) Push(trigger string) (string, error) {
+func Push(trigger string) (string, error) {
 	nodes, _, err := util.Consul().Catalog().Nodes(&api.QueryOptions{})
 	if err != nil {
 		return "", err
