@@ -24,7 +24,7 @@ func NewService(name, description string) (*Service, error) {
 }
 
 func (service *Service) Manage() (string, error) {
-	usage := "Usage: scheduler install | remove | start | stop | status"
+	usage := "Usage: scheduler install | remove | start | stop | status | agent"
 
 	if flag.NArg() > 0 {
 		switch flag.Args()[0] {
@@ -38,21 +38,26 @@ func (service *Service) Manage() (string, error) {
 			return service.Stop()
 		case "status":
 			return service.Status()
+		case "agent":
+			return agent()
 		default:
 			return usage, nil
 		}
 	}
+	return agent()
+}
 
+func agent() (string, error) {
 	scheduler, err := scheduler.NewScheduler()
 	if err != nil {
 		return "Failed to create scheduler", err
 	}
 	go scheduler.Run()
 
-	return service.waitSignal()
+	return waitSignal()
 }
 
-func (service *Service) waitSignal() (string, error) {
+func waitSignal() (string, error) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
