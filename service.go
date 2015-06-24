@@ -40,6 +40,8 @@ func (service *Service) Manage() (string, error) {
 			return service.Status()
 		case "agent":
 			return agent()
+		case "push":
+			return push()
 		default:
 			return usage, nil
 		}
@@ -72,4 +74,12 @@ func waitSignal() (string, error) {
 	}
 
 	return "", nil
+}
+
+func push() (string, error) {
+	scheduler, err := scheduler.NewScheduler()
+	if err != nil {
+		return "Failed to create scheduler", err
+	}
+	return scheduler.Push(flag.Args()[1])
 }

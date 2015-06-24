@@ -159,3 +159,19 @@ func (scheduler *Scheduler) findSelfNode() (string, error) {
 
 	return "", errors.New("Current system ip address does not found in consul catalog")
 }
+
+func (scheduler *Scheduler) Push(trigger string) (string, error) {
+	nodes, _, err := scheduler.client.Catalog().Nodes(&api.QueryOptions{})
+	if err != nil {
+		return "", err
+	}
+	for _, n := range nodes {
+		eq := &Queue{Client: scheduler.client, Node: n.Node}
+		err = eq.EnQueue(Item{Type: trigger})
+		if err != nil {
+			return "", err
+		}
+		fmt.Printf("Push event to queue(Node: %s, Type: %s)\n", n.Node, trigger)
+	}
+	return "", nil
+}
