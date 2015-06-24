@@ -17,14 +17,19 @@ func Parse(src interface{}, vars map[string]string) interface{} {
 
 func ParseString(src string, vars map[string]string) string {
 	r, _ := regexp.Compile("{{([^{}]+)}}")
-	return r.ReplaceAllStringFunc(src, func(s string) string {
-		k := s[2 : len(s)-2]
-		v, ok := vars[k]
-		if !ok {
-			return s
-		}
-		return v
-	})
+	for prev := ""; prev != src; {
+		prev = src
+		src = r.ReplaceAllStringFunc(src, func(s string) string {
+			k := s[2 : len(s)-2]
+			v, ok := vars[k]
+			if !ok {
+				return s
+			}
+			return v
+		})
+	}
+
+	return src
 }
 
 func ParseArray(src []string, vars map[string]string) []string {
