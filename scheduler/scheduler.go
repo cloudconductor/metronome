@@ -19,7 +19,6 @@ import (
 
 type Scheduler struct {
 	schedules map[string]Schedule
-	client    *api.Client
 	node      string
 }
 
@@ -46,7 +45,7 @@ func NewScheduler() (*Scheduler, error) {
 }
 
 func (scheduler *Scheduler) Run() {
-	eq := &Queue{Client: scheduler.client, Node: scheduler.node}
+	eq := &Queue{Client: util.Consul(), Node: scheduler.node}
 
 	for {
 		fmt.Println(time.Now())
@@ -99,8 +98,6 @@ func (scheduler *Scheduler) load() error {
 }
 
 func (scheduler *Scheduler) connect() error {
-	scheduler.client = util.Consul()
-
 	if config.Node != "" {
 		scheduler.node = config.Node
 		return nil
@@ -144,7 +141,7 @@ func (scheduler *Scheduler) findSelfNode() (string, error) {
 		return "", err
 	}
 
-	nodes, _, err := scheduler.client.Catalog().Nodes(&api.QueryOptions{})
+	nodes, _, err := util.Consul().Catalog().Nodes(&api.QueryOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -161,12 +158,12 @@ func (scheduler *Scheduler) findSelfNode() (string, error) {
 }
 
 func (scheduler *Scheduler) Push(trigger string) (string, error) {
-	nodes, _, err := scheduler.client.Catalog().Nodes(&api.QueryOptions{})
+	nodes, _, err := util.Consul().Catalog().Nodes(&api.QueryOptions{})
 	if err != nil {
 		return "", err
 	}
 	for _, n := range nodes {
-		eq := &Queue{Client: scheduler.client, Node: n.Node}
+		eq := &Queue{Client: util.Consul(), Node: n.Node}
 		err = eq.EnQueue(Item{Type: trigger})
 		if err != nil {
 			return "", err
