@@ -2,12 +2,16 @@ package config
 
 import (
 	"flag"
+	"io/ioutil"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/monochromegane/conflag"
 )
 
 const CONF_PATH string = "/etc/scheduler/config.yml"
+const VARIABLES_PATH string = "/etc/scheduler/variables.yml"
 
 var (
 	UserVariables stringMapValue
@@ -28,7 +32,8 @@ var (
 )
 
 func init() {
-	flag.Var(&UserVariables, "var", "specify a user variable")
+	UserVariables = loadUserVariables(VARIABLES_PATH)
+	flag.Var(&UserVariables, "var", "Specify user variables(ex. \"-var key1=value1 -var key2=value2\")")
 
 	flag.StringVar(&Node, "node", "", "Node name of this server on consul(default: Retrieve node from consul catalog)")
 
@@ -49,6 +54,21 @@ func init() {
 	}
 
 	flag.Parse()
+}
+
+func loadUserVariables(path string) map[string]string {
+	vars := make(map[string]string)
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+
+	err = yaml.Unmarshal(b, &vars)
+	if err != nil {
+		return nil
+	}
+
+	return vars
 }
 
 type stringMapValue map[string]string
