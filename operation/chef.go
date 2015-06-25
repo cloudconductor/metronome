@@ -35,7 +35,7 @@ func NewChefOperation(v json.RawMessage) *ChefOperation {
 }
 
 func (o *ChefOperation) Run(vars map[string]string) error {
-	json, err := o.createJson(util.ParseArray(o.RunList, vars), util.ParseMap(o.Attributes, vars))
+	json, err := o.createJson(parseRunList(o.RunList, vars), util.ParseMap(o.Attributes, vars))
 	if err != nil {
 		return err
 	}
@@ -46,6 +46,20 @@ func (o *ChefOperation) Run(vars map[string]string) error {
 	}
 
 	return o.executeChef(conf, json)
+}
+
+func parseRunList(runlist []string, vars map[string]string) []string {
+	var results []string
+	for _, v := range runlist {
+		if strings.Contains(v, "{{role}}") {
+			for _, role := range strings.Split(config.Role, ",") {
+				results = append(results, strings.Replace(v, "{{role}}", role, -1))
+			}
+		} else {
+			results = append(results, v)
+		}
+	}
+	return util.ParseArray(results, vars)
 }
 
 func (o *ChefOperation) createJson(runlist []string, overwriteAttributes map[string]interface{}) (string, error) {
