@@ -7,6 +7,8 @@ import (
 	"github.com/monochromegane/conflag"
 )
 
+const CONF_PATH string = "/etc/scheduler/config.yml"
+
 var (
 	UserVariables stringMapValue
 
@@ -42,7 +44,7 @@ func init() {
 
 	flag.StringVar(&Role, "role", "", "Role names of self instance(ex. \"-role web, ap\")")
 
-	if args, err := conflag.ArgsFrom("/etc/scheduler/config.yml"); err == nil {
+	if args, err := conflag.ArgsFrom(CONF_PATH); err == nil {
 		flag.CommandLine.Parse(args)
 	}
 
