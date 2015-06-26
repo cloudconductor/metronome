@@ -36,10 +36,11 @@ func NewScheduler() (*Scheduler, error) {
 		return nil, err
 	}
 
-	err = scheduler.connect()
+	scheduler.node, err = getSelfNode()
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("Scheduler initialized(Self node: %s)\n", scheduler.node)
 
 	return scheduler, nil
 }
@@ -97,16 +98,31 @@ func (scheduler *Scheduler) load() error {
 	return nil
 }
 
-func (scheduler *Scheduler) connect() error {
+func getSelfNode() (string, error) {
 	if config.Node != "" {
-		scheduler.node = config.Node
-		return nil
+		return config.Node, nil
 	}
 
 	var err error
-	scheduler.node, err = scheduler.findSelfNode()
-	fmt.Printf("Node does not set, self node is registered as %s in consul catalog\n", scheduler.node)
-	return err
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return "", err
+	}
+
+	nodes, _, err := util.Consul().Catalog().Nodes(&api.QueryOptions{})
+	if err != nil {
+		return "", err
+	}
+	for _, n := range nodes {
+		for _, a := range addrs {
+			h := strings.Split(a.String(), "/")[0]
+			if n.Address == h {
+				return n.Node, nil
+			}
+		}
+	}
+
+	return "", errors.New("Current system ip address does not found in consul catalog")
 }
 
 func (scheduler *Scheduler) dispatch(trigger string) error {
@@ -135,40 +151,20 @@ func (scheduler *Scheduler) filter(trigger string) []DispatchTask {
 	return tasks
 }
 
-func (scheduler *Scheduler) findSelfNode() (string, error) {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return "", err
-	}
-
-	nodes, _, err := util.Consul().Catalog().Nodes(&api.QueryOptions{})
-	if err != nil {
-		return "", err
-	}
-	for _, n := range nodes {
-		for _, a := range addrs {
-			h := strings.Split(a.String(), "/")[0]
-			if n.Address == h {
-				return n.Node, nil
-			}
-		}
-	}
-
-	return "", errors.New("Current system ip address does not found in consul catalog")
-}
-
 func Push(trigger string) (string, error) {
-	nodes, _, err := util.Consul().Catalog().Nodes(&api.QueryOptions{})
+	var node string
+	var err error
+	node, err = getSelfNode()
 	if err != nil {
 		return "", err
 	}
-	for _, n := range nodes {
-		eq := &Queue{Client: util.Consul(), Node: n.Node}
-		err = eq.EnQueue(Item{Type: trigger})
-		if err != nil {
-			return "", err
-		}
-		fmt.Printf("Push event to queue(Node: %s, Type: %s)\n", n.Node, trigger)
+
+	eq := &Queue{Client: util.Consul(), Node: node}
+	err = eq.EnQueue(Item{Type: trigger})
+	if err != nil {
+		return "", err
 	}
+
+	fmt.Printf("Push event to queue(Node: %s, Type: %s)\n", node, trigger)
 	return "", nil
 }
