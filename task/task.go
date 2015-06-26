@@ -47,7 +47,9 @@ func (t *Task) UnmarshalJSON(d []byte) error {
 	u.unmarshal([]byte(m["name"]), &t.Name)
 	u.unmarshal([]byte(m["trigger"]), &t.Trigger)
 	u.unmarshal([]byte(m["description"]), &t.Description)
-	u.unmarshal([]byte(m["filter"]), &t.Filter)
+	if _, ok := m["filter"]; ok {
+		u.unmarshal([]byte(m["filter"]), &t.Filter)
+	}
 	u.unmarshalOperations([]byte(m["operations"]), &t.Operations)
 
 	fmt.Printf("Loaded %v\n", t)
