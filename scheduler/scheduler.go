@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net"
+	"os"
 	"path/filepath"
 	"scheduler/config"
 	"scheduler/task"
@@ -36,7 +36,7 @@ func NewScheduler() (*Scheduler, error) {
 		return nil, err
 	}
 
-	scheduler.node, err = getSelfNode()
+	scheduler.node, err = os.Hostname()
 	if err != nil {
 		return nil, err
 	}
@@ -98,33 +98,6 @@ func (scheduler *Scheduler) load() error {
 	return nil
 }
 
-func getSelfNode() (string, error) {
-	if config.Node != "" {
-		return config.Node, nil
-	}
-
-	var err error
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return "", err
-	}
-
-	nodes, _, err := util.Consul().Catalog().Nodes(&api.QueryOptions{})
-	if err != nil {
-		return "", err
-	}
-	for _, n := range nodes {
-		for _, a := range addrs {
-			h := strings.Split(a.String(), "/")[0]
-			if n.Address == h {
-				return n.Node, nil
-			}
-		}
-	}
-
-	return "", errors.New("Current system ip address does not found in consul catalog")
-}
-
 func (scheduler *Scheduler) dispatch(trigger string) error {
 	tasks := scheduler.filter(trigger)
 	if len(tasks) == 0 {
@@ -154,7 +127,7 @@ func (scheduler *Scheduler) filter(trigger string) []DispatchTask {
 func Push(trigger string) (string, error) {
 	var node string
 	var err error
-	node, err = getSelfNode()
+	node, err = os.Hostname()
 	if err != nil {
 		return "", err
 	}

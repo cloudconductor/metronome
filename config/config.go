@@ -16,8 +16,6 @@ const VARIABLES_PATH string = "/etc/scheduler/variables.yml"
 var (
 	UserVariables stringMapValue
 
-	Node string
-
 	Token              string
 	Hostname           string
 	Port               int
@@ -34,8 +32,6 @@ var (
 func init() {
 	UserVariables = loadUserVariables(VARIABLES_PATH)
 	flag.Var(&UserVariables, "var", "Specify user variables(ex. \"-var key1=value1 -var key2=value2\")")
-
-	flag.StringVar(&Node, "node", "", "Node name of this server on consul(default: Retrieve node from consul catalog)")
 
 	flag.StringVar(&Token, "token", "", "Consul ACL token")
 	flag.StringVar(&Hostname, "host", "127.0.0.1", "Consul host")
