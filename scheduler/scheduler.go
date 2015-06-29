@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -40,8 +41,13 @@ func NewScheduler() (*Scheduler, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("Scheduler initialized(Self node: %s)\n", scheduler.node)
 
+	err = scheduler.registerServer()
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("Scheduler initialized(Self node: %s)\n", scheduler.node)
 	return scheduler, nil
 }
 
@@ -140,4 +146,51 @@ func Push(trigger string) (string, error) {
 
 	fmt.Printf("Push event to queue(Node: %s, Type: %s)\n", node, trigger)
 	return "", nil
+}
+
+func (s *Scheduler) registerServer() error {
+	var key = "cloudconductor/servers/" + s.node
+	var c *api.Client = util.Consul()
+	kv, _, err := c.KV().Get(key, &api.QueryOptions{})
+	if err != nil {
+		return err
+	}
+
+	if kv == nil {
+		kv = &api.KVPair{Key: key}
+	}
+
+	m := make(map[string]interface{})
+	m["roles"] = strings.Split(config.Role, ",")
+	m["private_ip"], err = getAddress(s.node)
+	if err != nil {
+		return err
+	}
+
+	kv.Value, err = json.Marshal(m)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.KV().Put(kv, &api.WriteOptions{})
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func getAddress(node string) (string, error) {
+	nodes, _, err := util.Consul().Catalog().Nodes(&api.QueryOptions{})
+	if err != nil {
+		return "", err
+	}
+	for _, n := range nodes {
+		if n.Node == node {
+			return n.Address, nil
+		}
+	}
+
+	return "", errors.New("Current node does not found in consul catalog")
 }
