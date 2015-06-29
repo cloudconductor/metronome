@@ -3,6 +3,8 @@ package config
 import (
 	"flag"
 	"io/ioutil"
+	"os"
+	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -22,6 +24,9 @@ var (
 	Protocol           string
 	InsecureSkipVerify bool
 
+	ProxyHost string
+	ProxyPort int
+
 	ServiceManager string
 
 	BaseDir string
@@ -39,6 +44,9 @@ func init() {
 	flag.StringVar(&Protocol, "protocol", "https", "Consul protocol (http / https)")
 	flag.BoolVar(&InsecureSkipVerify, "insecure-skip-verify", false, "Skip server verification on SSL/TLS")
 
+	flag.StringVar(&ProxyHost, "proxy-host", "", "Hostname or IP Address of proxy server")
+	flag.IntVar(&ProxyPort, "proxy-port", 0, "Port number of proxy server")
+
 	flag.StringVar(&ServiceManager, "service-manager", "init", "Service manager(systemd / init)")
 
 	flag.StringVar(&BaseDir, "base-dir", "/opt/cloudconductor", "CloudConductor base dir(default: /opt/cloudconductor))")
@@ -50,6 +58,8 @@ func init() {
 	}
 
 	flag.Parse()
+
+	setEnvironmentVariables()
 }
 
 func loadUserVariables(path string) map[string]string {
@@ -80,4 +90,13 @@ func (v *stringMapValue) Set(s string) error {
 	items := strings.Split(s, "=")
 	(*v)[items[0]] = items[1]
 	return nil
+}
+
+func setEnvironmentVariables() {
+	if ProxyHost != "" || ProxyPort != 0 {
+		proxy := "http://" + ProxyHost + ":" + strconv.Itoa(ProxyPort)
+		os.Setenv("HTTP_PROXY", proxy)
+		os.Setenv("HTTPS_PROXY", proxy)
+		os.Setenv("FTP_PROXY", proxy)
+	}
 }
