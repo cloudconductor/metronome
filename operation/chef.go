@@ -22,11 +22,6 @@ type ChefOperation struct {
 	Attributes map[string]interface{}
 }
 
-type ChefJson struct {
-	RunList        []string               `json:"run_list"`
-	CloudConductor map[string]interface{} `json:"cloudconductor"`
-}
-
 func NewChefOperation(v json.RawMessage) *ChefOperation {
 	o := &ChefOperation{}
 	json.Unmarshal(v, &o)
@@ -63,34 +58,47 @@ func parseRunList(runlist []string, vars map[string]string) []string {
 }
 
 func (o *ChefOperation) createJson(runlist []string, overwriteAttributes map[string]interface{}) (string, error) {
-	attributes := make(map[string]interface{})
-	err := getAttributes(&attributes)
-	if err != nil {
-		return "", err
-	}
-	err = mergeAttributes(attributes, overwriteAttributes)
+	var err error
+
+	cloudconductor, err := getAttributes(overwriteAttributes)
 	if err != nil {
 		return "", err
 	}
 
-	err = getServers(attributes)
+	servers, err := getServers()
 	if err != nil {
 		return "", err
 	}
-	json, err := writeJson(runlist, attributes)
+
+	attributes, err := extractAttributes(cloudconductor)
+	if err != nil {
+		return "", err
+	}
+
+	json, err := writeJson(runlist, cloudconductor, servers, attributes)
 	if err != nil {
 		return "", err
 	}
 	return json, nil
 }
 
-func getAttributes(out *map[string]interface{}) error {
+func getAttributes(overwriteAttributes map[string]interface{}) (map[string]interface{}, error) {
 	var c *api.Client = util.Consul()
 	kv, _, err := c.KV().Get("cloudconductor/parameters", &api.QueryOptions{})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return json.Unmarshal(kv.Value, out)
+	var attributes map[string]interface{}
+	err = json.Unmarshal(kv.Value, &attributes)
+	if err != nil {
+		return nil, err
+	}
+
+	err = mergeAttributes(attributes, overwriteAttributes)
+	if err != nil {
+		return nil, err
+	}
+	return attributes, nil
 }
 
 func mergeAttributes(src, dst map[string]interface{}) error {
@@ -106,30 +114,47 @@ func mergeAttributes(src, dst map[string]interface{}) error {
 	return nil
 }
 
-func getServers(attributes map[string]interface{}) error {
+func getServers() (map[string]interface{}, error) {
 	var c *api.Client = util.Consul()
 	consulServers, _, err := c.KV().List("cloudconductor/servers", &api.QueryOptions{})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	servers := make(map[string]interface{})
-	attributes["cloudconductor"].(map[string]interface{})["servers"] = servers
 	for _, s := range consulServers {
 		node := strings.TrimPrefix(s.Key, "cloudconductor/servers/")
 		v := make(map[string]interface{})
 		err = json.Unmarshal(s.Value, &v)
 		servers[node] = v
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
-	return nil
+	return servers, nil
 }
 
-func writeJson(r []string, a map[string]interface{}) (string, error) {
-	j := &ChefJson{RunList: r, CloudConductor: a["cloudconductor"].(map[string]interface{})}
+func extractAttributes(src map[string]interface{}) (map[string]interface{}, error) {
+	var results map[string]interface{}
 
-	b, err := json.Marshal(j)
+	patterns := src["cloudconductor"].(map[string]interface{})["patterns"].(map[string]interface{})
+	for _, v := range patterns {
+		m := v.(map[string]interface{})["user_attributes"].(map[string]interface{})
+		err := mergo.MergeWithOverwrite(&results, m)
+		if err != nil {
+			return nil, errors.New(fmt.Sprintf("Failed to merge attributes(%v)", err))
+		}
+	}
+	return results, nil
+}
+
+func writeJson(runlist []string, cloudconductor map[string]interface{}, servers map[string]interface{}, attributes map[string]interface{}) (string, error) {
+	m := make(map[string]interface{})
+	m["run_list"] = runlist
+	m["cloudconductor"] = cloudconductor
+	m["cloudconductor"].(map[string]interface{})["servers"] = servers
+	mergo.MergeWithOverwrite(&m, attributes)
+
+	b, err := json.Marshal(m)
 	if err != nil {
 		return "", err
 	}
