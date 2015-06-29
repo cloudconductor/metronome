@@ -105,6 +105,11 @@ func mergeAttributes(src, dst map[string]interface{}) error {
 	patterns := src["cloudconductor"].(map[string]interface{})["patterns"].(map[string]interface{})
 
 	for k, v := range dst {
+		if patterns[k] == nil {
+			pattern := make(map[string]interface{})
+			pattern["user_attributes"] = make(map[string]interface{})
+			patterns[k] = pattern
+		}
 		m := patterns[k].(map[string]interface{})["user_attributes"].(map[string]interface{})
 		err := mergo.MergeWithOverwrite(&m, v)
 		if err != nil {
