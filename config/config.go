@@ -45,7 +45,7 @@ func init() {
 	flag.BoolVar(&InsecureSkipVerify, "insecure-skip-verify", false, "Skip server verification on SSL/TLS")
 
 	flag.StringVar(&ProxyHost, "proxy-host", "", "Hostname or IP Address of proxy server")
-	flag.IntVar(&ProxyPort, "proxy-port", 0, "Port number of proxy server")
+	flag.IntVar(&ProxyPort, "proxy-port", 8080, "Port number of proxy server")
 
 	flag.StringVar(&ServiceManager, "service-manager", "init", "Service manager(systemd / init)")
 
@@ -93,7 +93,7 @@ func (v *stringMapValue) Set(s string) error {
 }
 
 func setEnvironmentVariables() {
-	if ProxyHost != "" || ProxyPort != 0 {
+	if ProxyHost != "" {
 		proxy := "http://" + ProxyHost + ":" + strconv.Itoa(ProxyPort)
 		os.Setenv("http_proxy", proxy)
 		os.Setenv("https_proxy", proxy)
