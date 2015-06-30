@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"scheduler/scheduler"
@@ -42,6 +43,8 @@ func (service *Service) Manage() (string, error) {
 			return agent()
 		case "push":
 			return scheduler.Push(flag.Args()[1])
+		case "dispatch":
+			return dispatch(flag.Args()[1])
 		default:
 			return usage, nil
 		}
@@ -73,5 +76,17 @@ func waitSignal() (string, error) {
 		}
 	}
 
+	return "", nil
+}
+
+func dispatch(trigger string) (string, error) {
+	scheduler, err := scheduler.NewScheduler()
+	if err != nil {
+		return "Failed to create scheduler", err
+	}
+	err = scheduler.Dispatch(trigger)
+	if err != nil {
+		return fmt.Sprintf("Failed to dispatch event(%s)", trigger), err
+	}
 	return "", nil
 }

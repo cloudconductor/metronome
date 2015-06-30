@@ -58,7 +58,7 @@ func (scheduler *Scheduler) Run() {
 		}
 		if item != nil {
 			fmt.Printf("Receive item %s\n", item.Type)
-			err = scheduler.dispatch(item.Type)
+			err = scheduler.Dispatch(item.Type)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -109,7 +109,7 @@ func (scheduler *Scheduler) connect() error {
 	return scheduler.registerServer()
 }
 
-func (scheduler *Scheduler) dispatch(trigger string) error {
+func (scheduler *Scheduler) Dispatch(trigger string) error {
 	tasks := scheduler.filter(trigger)
 	if len(tasks) == 0 {
 		return errors.New(fmt.Sprintf("Task %s is not defined", trigger))
