@@ -95,8 +95,8 @@ func (v *stringMapValue) Set(s string) error {
 func setEnvironmentVariables() {
 	if ProxyHost != "" || ProxyPort != 0 {
 		proxy := "http://" + ProxyHost + ":" + strconv.Itoa(ProxyPort)
-		os.Setenv("HTTP_PROXY", proxy)
-		os.Setenv("HTTPS_PROXY", proxy)
-		os.Setenv("FTP_PROXY", proxy)
+		os.Setenv("http_proxy", proxy)
+		os.Setenv("https_proxy", proxy)
+		os.Setenv("ftp_proxy", proxy)
 	}
 }
