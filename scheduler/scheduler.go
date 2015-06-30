@@ -37,21 +37,16 @@ func NewScheduler() (*Scheduler, error) {
 		return nil, err
 	}
 
-	scheduler.node, err = os.Hostname()
-	if err != nil {
-		return nil, err
-	}
-
-	err = scheduler.registerServer()
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Printf("Scheduler initialized(Self node: %s)\n", scheduler.node)
+	fmt.Println("Scheduler initialized")
 	return scheduler, nil
 }
 
 func (scheduler *Scheduler) Run() {
+	err := scheduler.connect()
+	if err != nil {
+		panic(err)
+	}
+
 	eq := &Queue{Client: util.Consul(), Node: scheduler.node}
 
 	for {
@@ -102,6 +97,16 @@ func (scheduler *Scheduler) load() error {
 		scheduler.schedules[e.Name()] = schedule
 	}
 	return nil
+}
+
+func (scheduler *Scheduler) connect() error {
+	var err error
+	scheduler.node, err = os.Hostname()
+	if err != nil {
+		return err
+	}
+
+	return scheduler.registerServer()
 }
 
 func (scheduler *Scheduler) dispatch(trigger string) error {
