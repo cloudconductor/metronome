@@ -18,8 +18,9 @@ import (
 
 type ChefOperation struct {
 	BaseOperation
-	RunList    []string `json:"run_list"`
-	Attributes map[string]interface{}
+	RunList        []string `json:"run_list"`
+	Configurations map[string]interface{}
+	Attributes     map[string]interface{}
 }
 
 func NewChefOperation(v json.RawMessage) *ChefOperation {
@@ -187,6 +188,11 @@ func (o *ChefOperation) createConf(vars map[string]string) (string, error) {
 	defer f.Close()
 
 	m, err := o.defaultConfig()
+	if err != nil {
+		return "", err
+	}
+
+	err = mergo.MergeWithOverwrite(&m, o.Configurations)
 	if err != nil {
 		return "", err
 	}
