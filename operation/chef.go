@@ -306,7 +306,10 @@ func (o *ChefOperation) executeChef(conf string, json string) error {
 	fmt.Printf("Execute chef(conf: %s, json: %s)\n", conf, json)
 	cmd := exec.Command("chef-solo", "-c", conf, "-j", json)
 	cmd.Dir = o.patternDir()
-	return cmd.Run()
+	out, err := cmd.CombinedOutput()
+	fmt.Println(string(out))
+	fmt.Println(err)
+	return err
 }
 
 func (o *ChefOperation) patternDir() string {
