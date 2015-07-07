@@ -12,10 +12,13 @@ import (
 	"scheduler/config"
 	"scheduler/util"
 	"strings"
+	"syscall"
 
 	"github.com/hashicorp/consul/api"
 	"github.com/imdario/mergo"
 )
+
+const BERKS_VENDOR_ERROR = 139
 
 type ChefOperation struct {
 	BaseOperation
@@ -40,6 +43,11 @@ func (o *ChefOperation) Run(vars map[string]string) error {
 	}
 
 	conf, err := o.createConf(vars)
+	if err != nil {
+		return err
+	}
+
+	err = o.executeBerkshelf()
 	if err != nil {
 		return err
 	}
@@ -266,6 +274,26 @@ func (o *ChefOperation) defaultConfig() (map[string]interface{}, error) {
 	m["cookbook_path"] = cookbookDirs
 
 	return m, nil
+}
+
+func (o *ChefOperation) executeBerkshelf() error {
+	cmd := exec.Command("berks", "vendor", "cookbooks")
+	cmd.Dir = o.patternDir()
+	cmd.Env = []string{"HOME=/root"}
+	out, err := cmd.CombinedOutput()
+	fmt.Println(string(out))
+
+	if err != nil {
+		if e2, ok := err.(*exec.ExitError); ok {
+			if s, ok := e2.Sys().(syscall.WaitStatus); ok {
+				if s.ExitStatus() == BERKS_VENDOR_ERROR {
+					return nil
+				}
+			}
+		}
+	}
+	fmt.Println(err)
+	return err
 }
 
 func (o *ChefOperation) executeChef(conf string, json string) error {
