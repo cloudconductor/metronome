@@ -111,15 +111,18 @@ func (o *ChefOperation) createJson(runlist []string, overwriteAttributes map[str
 }
 
 func getAttributes(overwriteAttributes map[string]interface{}) (map[string]interface{}, error) {
+	var attributes map[string]interface{}
 	var c *api.Client = util.Consul()
 	kv, _, err := c.KV().Get("cloudconductor/parameters", &api.QueryOptions{})
-	if err != nil {
-		return nil, err
-	}
-	var attributes map[string]interface{}
-	err = json.Unmarshal(kv.Value, &attributes)
-	if err != nil {
-		return nil, err
+	if err == nil && kv != nil {
+		err = json.Unmarshal(kv.Value, &attributes)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		attributes = make(map[string]interface{})
+		attributes["cloudconductor"] = make(map[string]interface{})
+		attributes["cloudconductor"].(map[string]interface{})["patterns"] = make(map[string]interface{})
 	}
 
 	err = mergeAttributes(attributes, overwriteAttributes)
