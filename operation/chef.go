@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"scheduler/config"
 	"scheduler/util"
 	"strings"
@@ -31,7 +32,9 @@ func NewChefOperation(v json.RawMessage) *ChefOperation {
 }
 
 func (o *ChefOperation) Run(vars map[string]string) error {
-	json, err := o.createJson(parseRunList(o.RunList, vars), util.ParseMap(o.Attributes, vars))
+	runlist := o.ensureRunList(o.parseRunList(o.RunList, vars))
+
+	json, err := o.createJson(runlist, util.ParseMap(o.Attributes, vars))
 	if err != nil {
 		return err
 	}
@@ -44,7 +47,7 @@ func (o *ChefOperation) Run(vars map[string]string) error {
 	return o.executeChef(conf, json)
 }
 
-func parseRunList(runlist []string, vars map[string]string) []string {
+func (o *ChefOperation) parseRunList(runlist []string, vars map[string]string) []string {
 	var results []string
 	for _, v := range runlist {
 		if strings.Contains(v, "{{role}}") {
@@ -57,6 +60,21 @@ func parseRunList(runlist []string, vars map[string]string) []string {
 		}
 	}
 	return util.ParseArray(results, vars)
+}
+
+func (o *ChefOperation) ensureRunList(runlist []string) []string {
+	var results []string
+	r, _ := regexp.Compile("^role\\[(.*)\\]$")
+	for _, v := range runlist {
+		matches := r.FindStringSubmatch(v)
+		if len(matches) > 0 {
+			if !util.Exists(filepath.Join(o.patternDir(), "roles", matches[1]+".json")) {
+				continue
+			}
+		}
+		results = append(results, v)
+	}
+	return results
 }
 
 func (o *ChefOperation) createJson(runlist []string, overwriteAttributes map[string]interface{}) (string, error) {
