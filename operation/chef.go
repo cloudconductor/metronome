@@ -47,7 +47,8 @@ func parseRunList(runlist []string, vars map[string]string) []string {
 	var results []string
 	for _, v := range runlist {
 		if strings.Contains(v, "{{role}}") {
-			for _, role := range strings.Split(config.Role, ",") {
+			roles := append([]string{"all"}, strings.Split(config.Role, ",")...)
+			for _, role := range roles {
 				results = append(results, strings.Replace(v, "{{role}}", role, -1))
 			}
 		} else {
