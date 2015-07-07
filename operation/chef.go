@@ -95,7 +95,7 @@ func (o *ChefOperation) createJson(runlist []string, overwriteAttributes map[str
 
 	servers, err := getServers()
 	if err != nil {
-		return "", err
+		servers = make(map[string]interface{})
 	}
 
 	attributes, err := extractAttributes(cloudconductor)
