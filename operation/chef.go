@@ -192,10 +192,7 @@ func (o *ChefOperation) createConf(vars map[string]string) (string, error) {
 	}
 
 	for k, v := range m {
-		if _, ok := vars[k]; ok {
-			v = vars[k]
-		}
-		_, err = f.WriteString(fmt.Sprintf("%s %s\n", k, v))
+		_, err = f.WriteString(fmt.Sprintf("%s %s\n", k, convertRubyCode(v)))
 		if err != nil {
 			return "", err
 		}
@@ -204,34 +201,46 @@ func (o *ChefOperation) createConf(vars map[string]string) (string, error) {
 	return f.Name(), nil
 }
 
-func (o *ChefOperation) defaultConfig() (map[string]string, error) {
-	m := map[string]string{
+func convertRubyCode(v interface{}) string {
+	switch v.(type) {
+	case string:
+		if strings.HasPrefix(v.(string), ":") {
+			return v.(string)
+		} else {
+			return "'" + v.(string) + "'"
+		}
+	case []string:
+		var values []string
+		for _, e := range v.([]string) {
+			values = append(values, "'"+e+"'")
+		}
+		return "[" + strings.Join(values, ",") + "]"
+	}
+
+	return ""
+}
+
+func (o *ChefOperation) defaultConfig() (map[string]interface{}, error) {
+	m := map[string]interface{}{
 		"ssl_verify_mode": ":verify_peer",
-		"role_path":       "[]",
+		"role_path":       []string{},
 		"log_level":       ":info",
 		"log_location":    "",
 		"file_cache_path": "",
-		"cookbook_path":   "[]",
+		"cookbook_path":   []string{},
 	}
 
 	var roleDirs []string
 	var cookbookDirs []string
 
-	patternDir := filepath.Join(config.BaseDir, "patterns", o.pattern)
+	roleDirs = []string{filepath.Join(o.patternDir(), "roles")}
+	cookbookDirs = []string{filepath.Join(o.patternDir(), "cookbooks"), filepath.Join(o.patternDir(), "site-cookbooks")}
 
-	var dir string
-	dir = "'" + filepath.Join(patternDir, "roles") + "'"
-	roleDirs = append(roleDirs, dir)
+	m["log_location"] = filepath.Join(o.patternDir(), "logs", o.pattern+"_chef-solo.log")
+	m["file_cache_path"] = filepath.Join(o.patternDir(), "tmp", "cache")
+	m["role_path"] = roleDirs
+	m["cookbook_path"] = cookbookDirs
 
-	dir = "'" + filepath.Join(patternDir, "cookbooks") + "'"
-	cookbookDirs = append(cookbookDirs, dir)
-	dir = "'" + filepath.Join(patternDir, "site-cookbooks") + "'"
-	cookbookDirs = append(cookbookDirs, dir)
-
-	m["log_location"] = "'" + filepath.Join(patternDir, "logs", o.pattern+"_chef-solo.log") + "'"
-	m["file_cache_path"] = "'" + filepath.Join(patternDir, "tmp", "cache") + "'"
-	m["role_path"] = "[" + strings.Join(roleDirs, ", ") + "]"
-	m["cookbook_path"] = "[" + strings.Join(cookbookDirs, ", ") + "]"
 	return m, nil
 }
 
@@ -243,6 +252,10 @@ func (o *ChefOperation) executeChef(conf string, json string) error {
 	cmd := exec.Command("chef-solo", "-c", conf, "-j", json)
 	cmd.Dir = filepath.Join(config.BaseDir, "patterns", o.pattern)
 	return cmd.Run()
+}
+
+func (o *ChefOperation) patternDir() string {
+	return filepath.Join(config.BaseDir, "patterns", o.pattern)
 }
 
 func (o *ChefOperation) String() string {
