@@ -6,8 +6,6 @@ import (
 	"os"
 	"scheduler/operation"
 	"scheduler/util"
-
-	"github.com/hashicorp/consul/api"
 )
 
 type Task struct {
@@ -68,7 +66,12 @@ func (t *Task) SetPattern(pattern string) {
 }
 
 func (t *Task) Run(vars map[string]string) error {
-	if !t.canRun() {
+	node, err := os.Hostname()
+	if err != nil {
+		return err
+	}
+
+	if !util.HasCatalogRecord(node, t.Filter.Service, t.Filter.Tag) {
 		fmt.Printf("Ignore task %s\n", t.Name)
 		return nil
 	}
@@ -82,39 +85,6 @@ func (t *Task) Run(vars map[string]string) error {
 	}
 	fmt.Printf("Task %s has finished\n", t.Name)
 	return nil
-}
-
-func (t *Task) canRun() bool {
-	if t.Filter.Service == "" && t.Filter.Tag == "" {
-		return true
-	}
-
-	node, err := os.Hostname()
-	if err != nil {
-		return false
-	}
-
-	catalog, _, err := util.Consul().Catalog().Node(node, &api.QueryOptions{})
-	if err != nil {
-		return false
-	}
-
-	service, ok := catalog.Services[t.Filter.Service]
-	if !ok {
-		return false
-	}
-
-	if t.Filter.Tag == "" {
-		return true
-	}
-
-	for _, s := range service.Tags {
-		if s == t.Filter.Tag {
-			return true
-		}
-	}
-
-	return false
 }
 
 func (t *Task) String() string {

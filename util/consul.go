@@ -32,3 +32,31 @@ func Consul() *api.Client {
 
 	return consul
 }
+
+func HasCatalogRecord(node string, service string, tag string) bool {
+	c, _, err := Consul().Catalog().Node(node, &api.QueryOptions{})
+	if err != nil || c == nil {
+		return false
+	}
+
+	if service == "" {
+		return true
+	}
+
+	s, ok := c.Services[service]
+	if !ok {
+		return false
+	}
+
+	if tag == "" {
+		return true
+	}
+
+	for _, t := range s.Tags {
+		if t == tag {
+			return true
+		}
+	}
+
+	return false
+}
