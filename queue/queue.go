@@ -1,4 +1,4 @@
-package scheduler
+package queue
 
 import (
 	"bytes"
@@ -18,7 +18,8 @@ var (
 const QueuePrefix = "task_queue"
 
 type Item struct {
-	Type string
+	Name    string
+	Trigger string
 }
 
 type Queue struct {

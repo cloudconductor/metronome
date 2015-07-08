@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"scheduler/config"
+	"scheduler/queue"
 	"scheduler/task"
 	"scheduler/util"
 	"strings"
@@ -47,7 +48,7 @@ func (scheduler *Scheduler) Run() {
 		panic(err)
 	}
 
-	eq := &Queue{Client: util.Consul(), Node: scheduler.node}
+	eq := &queue.Queue{Client: util.Consul(), Node: scheduler.node}
 
 	for {
 		fmt.Println(time.Now())
@@ -143,8 +144,8 @@ func Push(trigger string) (string, error) {
 		return "", err
 	}
 
-	eq := &Queue{Client: util.Consul(), Node: node}
-	err = eq.EnQueue(Item{Type: trigger})
+	eq := &queue.Queue{Client: util.Consul(), Node: node}
+	err = eq.EnQueue(queue.Item{Type: trigger})
 	if err != nil {
 		return "", err
 	}
