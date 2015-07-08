@@ -58,8 +58,8 @@ func (scheduler *Scheduler) Run() {
 			return
 		}
 		if item != nil {
-			fmt.Printf("Receive item %s\n", item.Type)
-			err = scheduler.Dispatch(item.Type)
+			fmt.Printf("Receive item (Name: %s, Trigger: %s)\n", item.Name, item.Trigger)
+			err = scheduler.Dispatch(item.Name, item.Trigger)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -110,8 +110,8 @@ func (scheduler *Scheduler) connect() error {
 	return scheduler.registerServer()
 }
 
-func (scheduler *Scheduler) Dispatch(trigger string) error {
-	tasks := scheduler.filter(trigger)
+func (scheduler *Scheduler) Dispatch(name string, trigger string) error {
+	tasks := scheduler.filter(name, trigger)
 	if len(tasks) == 0 {
 		return errors.New(fmt.Sprintf("Task %s is not defined", trigger))
 	}
@@ -124,11 +124,11 @@ func (scheduler *Scheduler) Dispatch(trigger string) error {
 	return nil
 }
 
-func (scheduler *Scheduler) filter(trigger string) []DispatchTask {
+func (scheduler *Scheduler) filter(name string, trigger string) []DispatchTask {
 	var tasks []DispatchTask
 	for k, v := range scheduler.schedules {
 		for _, t := range v.Tasks {
-			if t.Trigger == trigger {
+			if t.Name == name || t.Trigger == trigger {
 				tasks = append(tasks, DispatchTask{pattern: k, task: t})
 			}
 		}
@@ -145,7 +145,7 @@ func Push(trigger string) (string, error) {
 	}
 
 	eq := &queue.Queue{Client: util.Consul(), Node: node}
-	err = eq.EnQueue(queue.Item{Type: trigger})
+	err = eq.EnQueue(queue.Item{Trigger: trigger})
 	if err != nil {
 		return "", err
 	}
