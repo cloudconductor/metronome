@@ -27,7 +27,7 @@ type unmarshalContext struct {
 }
 
 func (u *unmarshalContext) unmarshal(data []byte, v interface{}) error {
-	if u.err != nil {
+	if u.err != nil || len(data) == 0 {
 		return u.err
 	}
 	u.err = json.Unmarshal(data, v)
