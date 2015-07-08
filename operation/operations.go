@@ -24,6 +24,9 @@ func init() {
 		"execute": func(v json.RawMessage) (Operation, error) {
 			return NewExecuteOperation(v), nil
 		},
+		"consul-event": func(v json.RawMessage) (Operation, error) {
+			return NewConsulEventOperation(v), nil
+		},
 	}
 }
 
