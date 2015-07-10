@@ -48,7 +48,7 @@ func (scheduler *Scheduler) Run() {
 		panic(err)
 	}
 
-	eq := &queue.Queue{Client: util.Consul(), Node: scheduler.node}
+	eq := &queue.Queue{Client: util.Consul(), Key: "task_queue" + scheduler.node}
 
 	for {
 		fmt.Println(time.Now())
@@ -144,7 +144,7 @@ func Push(trigger string) (string, error) {
 		return "", err
 	}
 
-	eq := &queue.Queue{Client: util.Consul(), Node: node}
+	eq := &queue.Queue{Client: util.Consul(), Key: "task_queue" + node}
 	err = eq.EnQueue(queue.Item{Trigger: trigger})
 	if err != nil {
 		return "", err

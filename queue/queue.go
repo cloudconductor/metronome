@@ -15,8 +15,6 @@ var (
 	ErrUpdatedFromOther = errors.New("Failed to write by race condition, will wait and retry")
 )
 
-const QueuePrefix = "task_queue"
-
 type Item struct {
 	Name    string
 	Trigger string
@@ -24,16 +22,16 @@ type Item struct {
 
 type Queue struct {
 	Client *api.Client
-	Node   string
+	Key    string
 }
 
 func init() {
 	rand.Seed(time.Now().Unix())
 }
 
-func (eq *Queue) EnQueue(item Item) error {
+func (q *Queue) EnQueue(item Item) error {
 	for {
-		err := eq.enQueue(item)
+		err := q.enQueue(item)
 		if err != ErrUpdatedFromOther {
 			return err
 		}
@@ -43,9 +41,9 @@ func (eq *Queue) EnQueue(item Item) error {
 	}
 }
 
-func (eq *Queue) DeQueue() (*Item, error) {
+func (q *Queue) DeQueue() (*Item, error) {
 	for {
-		item, err := eq.deQueue()
+		item, err := q.deQueue()
 		if err != ErrUpdatedFromOther {
 			return item, err
 		}
@@ -55,16 +53,16 @@ func (eq *Queue) DeQueue() (*Item, error) {
 	}
 }
 
-func (eq *Queue) enQueue(item Item) error {
+func (q *Queue) enQueue(item Item) error {
 	var items []Item
 
-	entry, _, err := eq.Client.KV().Get(eq.key(), nil)
+	entry, _, err := q.Client.KV().Get(q.Key, nil)
 	if err != nil {
 		return err
 	}
 
 	if entry == nil {
-		entry = &api.KVPair{Key: eq.key()}
+		entry = &api.KVPair{Key: q.Key}
 	}
 
 	dec := json.NewDecoder(bytes.NewReader(entry.Value))
@@ -77,16 +75,16 @@ func (eq *Queue) enQueue(item Item) error {
 
 	entry.Value = b.Bytes()
 
-	if result, _, _ := eq.Client.KV().CAS(entry, nil); !result {
+	if result, _, _ := q.Client.KV().CAS(entry, nil); !result {
 		return ErrUpdatedFromOther
 	}
 	return nil
 }
 
-func (eq *Queue) deQueue() (*Item, error) {
+func (q *Queue) deQueue() (*Item, error) {
 	var items []Item
 
-	entry, _, err := eq.Client.KV().Get(eq.key(), nil)
+	entry, _, err := q.Client.KV().Get(q.Key, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -109,12 +107,8 @@ func (eq *Queue) deQueue() (*Item, error) {
 
 	entry.Value = b.Bytes()
 
-	if result, _, _ := eq.Client.KV().CAS(entry, nil); !result {
+	if result, _, _ := q.Client.KV().CAS(entry, nil); !result {
 		return nil, ErrUpdatedFromOther
 	}
 	return &item, nil
-}
-
-func (eq *Queue) key() string {
-	return QueuePrefix + "/" + eq.Node
 }
