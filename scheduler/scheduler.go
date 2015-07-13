@@ -92,6 +92,7 @@ func (scheduler *Scheduler) load() error {
 		}
 		schedule.SetPattern(e.Name())
 		scheduler.schedules[e.Name()] = schedule
+		fmt.Println(&schedule)
 	}
 	return nil
 }
