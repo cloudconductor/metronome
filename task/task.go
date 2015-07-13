@@ -9,7 +9,7 @@ import (
 )
 
 type Task struct {
-	pattern     string
+	Pattern     string
 	Name        string
 	Trigger     string
 	Description string
@@ -59,7 +59,7 @@ func (t *Task) UnmarshalJSON(d []byte) error {
 }
 
 func (t *Task) SetPattern(pattern string) {
-	t.pattern = pattern
+	t.Pattern = pattern
 	for _, o := range t.Operations {
 		o.SetPattern(pattern)
 	}

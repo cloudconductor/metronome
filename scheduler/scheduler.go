@@ -24,11 +24,6 @@ type Scheduler struct {
 	node      string
 }
 
-type DispatchTask struct {
-	pattern string
-	task    task.Task
-}
-
 func NewScheduler() (*Scheduler, error) {
 	scheduler := &Scheduler{}
 	scheduler.schedules = make(map[string]Schedule)
@@ -117,7 +112,7 @@ func (scheduler *Scheduler) Dispatch(name string, trigger string) error {
 		return errors.New(fmt.Sprintf("Task %s is not defined", trigger))
 	}
 	for _, t := range tasks {
-		if err := t.task.Run(scheduler.schedules[t.pattern].Variables); err != nil {
+		if err := t.Run(scheduler.schedules[t.Pattern].Variables); err != nil {
 			return err
 		}
 	}
@@ -125,12 +120,12 @@ func (scheduler *Scheduler) Dispatch(name string, trigger string) error {
 	return nil
 }
 
-func (scheduler *Scheduler) filter(name string, trigger string) []DispatchTask {
-	var tasks []DispatchTask
-	for k, v := range scheduler.schedules {
+func (scheduler *Scheduler) filter(name string, trigger string) []task.Task {
+	var tasks []task.Task
+	for _, v := range scheduler.schedules {
 		for _, t := range v.Tasks {
 			if t.Name == name || t.Trigger == trigger {
-				tasks = append(tasks, DispatchTask{pattern: k, task: t})
+				tasks = append(tasks, t)
 			}
 		}
 	}
