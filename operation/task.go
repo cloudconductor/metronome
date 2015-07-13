@@ -1,13 +1,6 @@
 package operation
 
-import (
-	"encoding/json"
-	"fmt"
-	"scheduler/queue"
-	"scheduler/util"
-
-	"github.com/hashicorp/consul/api"
-)
+import "encoding/json"
 
 type TaskOperation struct {
 	BaseOperation
@@ -26,24 +19,6 @@ func NewTaskOperation(v json.RawMessage) *TaskOperation {
 }
 
 func (o *TaskOperation) Run(vars map[string]string) error {
-	nodes, _, err := util.Consul().Catalog().Nodes(&api.QueryOptions{})
-	if err != nil {
-		return err
-	}
-
-	for _, node := range nodes {
-		if !util.HasCatalogRecord(node.Node, o.Filter.Service, o.Filter.Tag) {
-			continue
-		}
-
-		eq := &queue.Queue{Client: util.Consul(), Key: "task_queue" + node.Node}
-		err = eq.EnQueue(queue.TaskEvent{Name: o.Name})
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("Enqueue %s on %s\n", o.Name, node.Node)
-	}
 	return nil
 }
 

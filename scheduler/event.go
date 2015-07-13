@@ -21,6 +21,10 @@ func (e *Event) SetPattern(pattern string) {
 	e.Pattern = pattern
 }
 
+func (e *Event) Run(vars map[string]string) error {
+	return nil
+}
+
 func (e Event) String() string {
 	s := ""
 	s += fmt.Sprintf("Name: %s\n", e.Name)

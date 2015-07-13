@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"scheduler/config"
 	"scheduler/queue"
-	"scheduler/task"
 	"scheduler/util"
 	"strings"
 	"time"
@@ -43,7 +42,7 @@ func (scheduler *Scheduler) Run() {
 		panic(err)
 	}
 
-	eq := &queue.Queue{Client: util.Consul(), Key: "task_queue" + scheduler.node}
+	eq := &queue.Queue{Client: util.Consul(), Key: "event_queue"}
 
 	for {
 		fmt.Println(time.Now())
@@ -54,8 +53,8 @@ func (scheduler *Scheduler) Run() {
 			return
 		}
 		if found {
-			fmt.Printf("Receive item (Name: %s, Trigger: %s)\n", item.Name, item.Trigger)
-			err = scheduler.Dispatch(item.Name, item.Trigger)
+			fmt.Printf("Receive item (Trigger: %s)\n", item.Trigger)
+			err = scheduler.Dispatch(item.Trigger)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -108,13 +107,13 @@ func (scheduler *Scheduler) connect() error {
 	return scheduler.registerServer()
 }
 
-func (scheduler *Scheduler) Dispatch(name string, trigger string) error {
-	tasks := scheduler.filter(name, trigger)
-	if len(tasks) == 0 {
-		return errors.New(fmt.Sprintf("Task %s is not defined", trigger))
+func (scheduler *Scheduler) Dispatch(trigger string) error {
+	events := scheduler.filter(trigger)
+	if len(events) == 0 {
+		return errors.New(fmt.Sprintf("Event %s is not defined", trigger))
 	}
-	for _, t := range tasks {
-		if err := t.Run(scheduler.schedules[t.Pattern].Variables); err != nil {
+	for _, e := range events {
+		if err := e.Run(scheduler.schedules[e.Pattern].Variables); err != nil {
 			return err
 		}
 	}
@@ -122,16 +121,16 @@ func (scheduler *Scheduler) Dispatch(name string, trigger string) error {
 	return nil
 }
 
-func (scheduler *Scheduler) filter(name string, trigger string) []*task.Task {
-	var tasks []*task.Task
+func (scheduler *Scheduler) filter(trigger string) []*Event {
+	var events []*Event
 	for _, v := range scheduler.schedules {
-		for _, t := range v.Tasks {
-			if t.Name == name || t.Trigger == trigger {
-				tasks = append(tasks, t)
+		for _, e := range v.Events {
+			if e.Name == trigger {
+				events = append(events, e)
 			}
 		}
 	}
-	return tasks
+	return events
 }
 
 func Push(trigger string) (string, error) {
@@ -142,7 +141,7 @@ func Push(trigger string) (string, error) {
 		return "", err
 	}
 
-	eq := &queue.Queue{Client: util.Consul(), Key: "task_queue" + node}
+	eq := &queue.Queue{Client: util.Consul(), Key: "event_queue"}
 	err = eq.EnQueue(queue.TaskEvent{Trigger: trigger})
 	if err != nil {
 		return "", err

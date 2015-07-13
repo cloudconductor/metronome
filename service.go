@@ -84,7 +84,7 @@ func dispatch(trigger string) (string, error) {
 	if err != nil {
 		return "Failed to create scheduler", err
 	}
-	err = scheduler.Dispatch("", trigger)
+	err = scheduler.Dispatch(trigger)
 	if err != nil {
 		return fmt.Sprintf("Failed to dispatch event(%s)", trigger), err
 	}
