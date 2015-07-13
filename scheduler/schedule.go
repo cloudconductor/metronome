@@ -12,8 +12,8 @@ type Schedule struct {
 	pattern   string
 	Variables map[string]string
 	Default   TaskDefault
-	Events    map[string]Event
-	Tasks     map[string]task.Task
+	Events    map[string]*Event
+	Tasks     map[string]*task.Task
 }
 
 type TaskDefault struct {
@@ -21,9 +21,14 @@ type TaskDefault struct {
 	ChefConfig string `json:"chef_config"`
 }
 
-func (s *Schedule) SetPattern(pattern string) {
+func (s *Schedule) PostUnmarshal(pattern string) {
 	s.pattern = pattern
-	for _, t := range s.Tasks {
+	for k, e := range s.Events {
+		e.Name = k
+		e.SetPattern(pattern)
+	}
+	for k, t := range s.Tasks {
+		t.Name = k
 		t.SetPattern(pattern)
 	}
 }
@@ -53,7 +58,7 @@ func (s *Schedule) String() string {
 	str += "Tasks:\n"
 	for k, v := range s.Tasks {
 		str += indent(fmt.Sprintf("%s:", k), 1) + "\n"
-		str += indent(fmt.Sprintf("%v", &v), 2) + "\n"
+		str += indent(fmt.Sprintf("%v", v), 2) + "\n"
 	}
 	return str
 }

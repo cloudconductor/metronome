@@ -9,14 +9,22 @@ type DispatchTask struct {
 }
 
 type Event struct {
+	Pattern      string
+	Name         string
 	Description  string
 	Priority     int
 	OrderedTasks []DispatchTask `json:"ordered_tasks"`
 	Task         string
 }
 
+func (e *Event) SetPattern(pattern string) {
+	e.Pattern = pattern
+}
+
 func (e Event) String() string {
 	s := ""
+	s += fmt.Sprintf("Name: %s\n", e.Name)
+	s += fmt.Sprintf("Pattern: %s\n", e.Pattern)
 	s += fmt.Sprintf("Description: %s\n", e.Description)
 	s += fmt.Sprintf("Priority: %d\n", e.Priority)
 	if e.Task != "" {

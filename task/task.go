@@ -91,6 +91,8 @@ func (t *Task) String() string {
 	var s string
 
 	s += fmt.Sprintf("Task %s\n", t.Name)
+	s += fmt.Sprintf("  Name: %s\n", t.Name)
+	s += fmt.Sprintf("  Pattern: %s\n", t.Pattern)
 	s += fmt.Sprintf("  Trigger: %s\n", t.Trigger)
 	s += fmt.Sprintf("  Description: %s\n", t.Description)
 	s += fmt.Sprintf("  Filter: %v\n", t.Filter)

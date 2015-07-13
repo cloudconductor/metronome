@@ -90,7 +90,8 @@ func (scheduler *Scheduler) load() error {
 		if err != nil {
 			return errors.New(fmt.Sprintf("Failed to unmarshal json(%s)\n\t%s", path, err))
 		}
-		schedule.SetPattern(e.Name())
+
+		schedule.PostUnmarshal(e.Name())
 		scheduler.schedules[e.Name()] = schedule
 		fmt.Println(&schedule)
 	}
@@ -121,8 +122,8 @@ func (scheduler *Scheduler) Dispatch(name string, trigger string) error {
 	return nil
 }
 
-func (scheduler *Scheduler) filter(name string, trigger string) []task.Task {
-	var tasks []task.Task
+func (scheduler *Scheduler) filter(name string, trigger string) []*task.Task {
+	var tasks []*task.Task
 	for _, v := range scheduler.schedules {
 		for _, t := range v.Tasks {
 			if t.Name == name || t.Trigger == trigger {
