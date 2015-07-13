@@ -37,7 +37,7 @@ func (o *TaskOperation) Run(vars map[string]string) error {
 		}
 
 		eq := &queue.Queue{Client: util.Consul(), Key: "task_queue" + node.Node}
-		err = eq.EnQueue(queue.Item{Name: o.Name})
+		err = eq.EnQueue(queue.TaskEvent{Name: o.Name})
 		if err != nil {
 			return err
 		}

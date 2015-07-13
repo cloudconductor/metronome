@@ -52,12 +52,13 @@ func (scheduler *Scheduler) Run() {
 
 	for {
 		fmt.Println(time.Now())
-		item, err := eq.DeQueue()
+		var item queue.TaskEvent
+		err, found := eq.DeQueue(&item)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		if item != nil {
+		if found {
 			fmt.Printf("Receive item (Name: %s, Trigger: %s)\n", item.Name, item.Trigger)
 			err = scheduler.Dispatch(item.Name, item.Trigger)
 			if err != nil {
@@ -145,7 +146,7 @@ func Push(trigger string) (string, error) {
 	}
 
 	eq := &queue.Queue{Client: util.Consul(), Key: "task_queue" + node}
-	err = eq.EnQueue(queue.Item{Trigger: trigger})
+	err = eq.EnQueue(queue.TaskEvent{Trigger: trigger})
 	if err != nil {
 		return "", err
 	}

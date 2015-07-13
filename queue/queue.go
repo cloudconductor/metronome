@@ -1,7 +1,6 @@
 package queue
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,11 +14,6 @@ var (
 	ErrUpdatedFromOther = errors.New("Failed to write by race condition, will wait and retry")
 )
 
-type Item struct {
-	Name    string
-	Trigger string
-}
-
 type Queue struct {
 	Client *api.Client
 	Key    string
@@ -29,7 +23,7 @@ func init() {
 	rand.Seed(time.Now().Unix())
 }
 
-func (q *Queue) EnQueue(item Item) error {
+func (q *Queue) EnQueue(item interface{}) error {
 	for {
 		err := q.enQueue(item)
 		if err != ErrUpdatedFromOther {
@@ -41,11 +35,11 @@ func (q *Queue) EnQueue(item Item) error {
 	}
 }
 
-func (q *Queue) DeQueue() (*Item, error) {
+func (q *Queue) DeQueue(item interface{}) (error, bool) {
 	for {
-		item, err := q.deQueue()
+		err, found := q.deQueue(item)
 		if err != ErrUpdatedFromOther {
-			return item, err
+			return err, found
 		}
 
 		fmt.Println("[Warn]", ErrUpdatedFromOther)
@@ -53,8 +47,8 @@ func (q *Queue) DeQueue() (*Item, error) {
 	}
 }
 
-func (q *Queue) enQueue(item Item) error {
-	var items []Item
+func (q *Queue) enQueue(item interface{}) error {
+	var items []interface{}
 
 	entry, _, err := q.Client.KV().Get(q.Key, nil)
 	if err != nil {
@@ -65,15 +59,19 @@ func (q *Queue) enQueue(item Item) error {
 		entry = &api.KVPair{Key: q.Key}
 	}
 
-	dec := json.NewDecoder(bytes.NewReader(entry.Value))
-	dec.Decode(&items)
+	if len(entry.Value) > 0 {
+		err = json.Unmarshal(entry.Value, &items)
+		if err != nil {
+			return err
+		}
+	}
+
 	items = append(items, item)
 
-	var b bytes.Buffer
-	enc := json.NewEncoder(&b)
-	enc.Encode(&items)
-
-	entry.Value = b.Bytes()
+	entry.Value, err = json.Marshal(items)
+	if err != nil {
+		return err
+	}
 
 	if result, _, _ := q.Client.KV().CAS(entry, nil); !result {
 		return ErrUpdatedFromOther
@@ -81,34 +79,46 @@ func (q *Queue) enQueue(item Item) error {
 	return nil
 }
 
-func (q *Queue) deQueue() (*Item, error) {
-	var items []Item
+func (q *Queue) deQueue(item interface{}) (error, bool) {
+	var items []interface{}
 
 	entry, _, err := q.Client.KV().Get(q.Key, nil)
 	if err != nil {
-		return nil, err
+		return err, false
 	}
 	if entry == nil {
-		return nil, nil
+		return nil, false
 	}
 
-	dec := json.NewDecoder(bytes.NewReader(entry.Value))
-	dec.Decode(&items)
+	if len(entry.Value) > 0 {
+		err = json.Unmarshal(entry.Value, &items)
+		if err != nil {
+			return err, false
+		}
+	}
 
 	if len(items) == 0 {
-		return nil, nil
+		return nil, false
 	}
 
-	item := items[0]
-	items = items[1:]
-	var b bytes.Buffer
-	enc := json.NewEncoder(&b)
-	enc.Encode(&items)
+	d, err := json.Marshal(items[0])
+	if err != nil {
+		return err, false
+	}
 
-	entry.Value = b.Bytes()
+	err = json.Unmarshal(d, &item)
+	if err != nil {
+		return err, false
+	}
+
+	items = items[1:]
+	entry.Value, err = json.Marshal(items)
+	if err != nil {
+		return err, false
+	}
 
 	if result, _, _ := q.Client.KV().CAS(entry, nil); !result {
-		return nil, ErrUpdatedFromOther
+		return ErrUpdatedFromOther, false
 	}
-	return &item, nil
+	return nil, true
 }
