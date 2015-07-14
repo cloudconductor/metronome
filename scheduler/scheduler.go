@@ -18,6 +18,8 @@ import (
 	"github.com/hashicorp/consul/api"
 )
 
+const EVENT_QUEUE_KEY = "scheduler/event_queue"
+
 type Scheduler struct {
 	schedules map[string]Schedule
 	node      string
@@ -42,7 +44,7 @@ func (scheduler *Scheduler) Run() {
 		panic(err)
 	}
 
-	eq := &queue.Queue{Client: util.Consul(), Key: "event_queue"}
+	eq := &queue.Queue{Client: util.Consul(), Key: EVENT_QUEUE_KEY}
 
 	for {
 		fmt.Println(time.Now())
@@ -141,7 +143,7 @@ func Push(trigger string) (string, error) {
 		return "", err
 	}
 
-	eq := &queue.Queue{Client: util.Consul(), Key: "event_queue"}
+	eq := &queue.Queue{Client: util.Consul(), Key: EVENT_QUEUE_KEY}
 	err = eq.EnQueue(queue.TaskEvent{Trigger: trigger})
 	if err != nil {
 		return "", err
@@ -181,7 +183,6 @@ func (s *Scheduler) registerServer() error {
 	}
 
 	return nil
-
 }
 
 func getAddress(node string) (string, error) {
