@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"reflect"
 	"time"
 
 	"github.com/hashicorp/consul/api"
@@ -121,4 +122,26 @@ func (q *Queue) deQueue(item interface{}) (error, bool) {
 		return ErrUpdatedFromOther, false
 	}
 	return nil, true
+}
+
+func (q *Queue) Items(items interface{}) error {
+	entry, _, err := q.Client.KV().Get(q.Key, nil)
+	if err != nil {
+		return err
+	}
+	if entry == nil || len(entry.Value) == 0 {
+		clearSlice(items)
+		return nil
+	}
+
+	return json.Unmarshal(entry.Value, items)
+}
+
+func clearSlice(items interface{}) {
+	if reflect.TypeOf(items).Kind() != reflect.Ptr {
+		return
+	}
+	t := reflect.TypeOf(items).Elem()
+	v := reflect.ValueOf(items).Elem()
+	v.Set(reflect.MakeSlice(t, 0, 0))
 }
