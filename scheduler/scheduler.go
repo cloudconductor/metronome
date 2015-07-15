@@ -19,6 +19,7 @@ import (
 )
 
 const EVENT_QUEUE_KEY = "scheduler/event_queue"
+const LOCK_KEY = "scheduler/event_queue/lock"
 
 type Scheduler struct {
 	schedules map[string]Schedule
@@ -48,15 +49,15 @@ func (scheduler *Scheduler) Run() {
 
 	for {
 		fmt.Println(time.Now())
-		var item queue.TaskEvent
-		err, found := eq.DeQueue(&item)
+		var event api.UserEvent
+		err, found := eq.DeQueue(&event)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 		if found {
-			fmt.Printf("Receive item (Trigger: %s)\n", item.Trigger)
-			err = scheduler.Dispatch(item.Trigger)
+			fmt.Printf("Dispatch event (ID: %s, Name: %s)\n", event.ID, event.Name)
+			err = scheduler.Dispatch(event.Name)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -136,21 +137,49 @@ func (scheduler *Scheduler) filter(trigger string) []*Event {
 }
 
 func Push(trigger string) (string, error) {
-	var node string
-	var err error
-	node, err = os.Hostname()
+	l, err := util.Consul().LockKey(LOCK_KEY)
+	_, err = l.Lock(nil)
 	if err != nil {
 		return "", err
 	}
+	defer l.Unlock()
 
 	eq := &queue.Queue{Client: util.Consul(), Key: EVENT_QUEUE_KEY}
-	err = eq.EnQueue(queue.TaskEvent{Trigger: trigger})
+
+	bytes, err := ioutil.ReadAll(os.Stdin)
+	var receiveEvents []api.UserEvent
+	err = json.Unmarshal(bytes, &receiveEvents)
+
+	for _, re := range receiveEvents {
+		err = pushSingleEvent(eq, re)
+		if err != nil {
+			return "", err
+		}
+	}
+	return "", nil
+}
+
+func pushSingleEvent(eq *queue.Queue, re api.UserEvent) error {
+	var storedEvents []api.UserEvent
+	err := eq.Items(&storedEvents)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	fmt.Printf("Push event to queue(Node: %s, Type: %s)\n", node, trigger)
-	return "", nil
+	for _, se := range storedEvents {
+		if se.ID == re.ID {
+			fmt.Printf("Receive event was already registerd in a queue(ID: %s)\n", re.ID)
+			return nil
+		}
+	}
+
+	err = eq.EnQueue(re)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Push event to queue(ID: %s, Name: %s)\n", re.ID, re.Name)
+	return nil
 }
 
 func (s *Scheduler) registerServer() error {
