@@ -136,7 +136,7 @@ func (scheduler *Scheduler) filter(trigger string) []*Event {
 	return events
 }
 
-func Push(trigger string) (string, error) {
+func Push() (string, error) {
 	l, err := util.Consul().LockKey(LOCK_KEY)
 	_, err = l.Lock(nil)
 	if err != nil {

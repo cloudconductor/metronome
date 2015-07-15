@@ -42,7 +42,7 @@ func (service *Service) Manage() (string, error) {
 		case "agent":
 			return agent()
 		case "push":
-			return scheduler.Push(flag.Args()[1])
+			return scheduler.Push()
 		case "dispatch":
 			return dispatch(flag.Args()[1])
 		default:
