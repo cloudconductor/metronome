@@ -186,7 +186,7 @@ func extractAttributes(src map[string]interface{}) (map[string]interface{}, erro
 func writeJson(runlist []string, cloudconductor map[string]interface{}, servers map[string]interface{}, attributes map[string]interface{}) (string, error) {
 	m := make(map[string]interface{})
 	m["run_list"] = runlist
-	m["cloudconductor"] = cloudconductor
+	m["cloudconductor"] = cloudconductor["cloudconductor"]
 	m["cloudconductor"].(map[string]interface{})["servers"] = servers
 	mergo.MergeWithOverwrite(&m, attributes)
 
