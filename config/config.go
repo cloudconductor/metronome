@@ -105,4 +105,8 @@ func setEnvironmentVariables() {
 	if Path != "" {
 		os.Setenv("PATH", Path+":"+os.Getenv("PATH"))
 	}
+
+	if Role != "" {
+		os.Setenv("ROLE", Role)
+	}
 }
