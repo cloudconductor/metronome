@@ -25,9 +25,6 @@ events:
         task: configure
       - service: haproxy
         task: configure
-      - service: postgresql
-        tag: standby
-        task: post-configure
 
   deploy:
     description: Execute setup
@@ -39,7 +36,7 @@ events:
     ordered_tasks:
       - service: postgresql
         tag: primary
-        task: dump_database
+        task: backup
 
   restore:
     description: Execute restore
@@ -49,7 +46,10 @@ events:
         tag: primary
         task: restore_database
       - service: postgresql
-        tag: secondary
+        tag: primary
+        task: configure
+      - service: postgresql
+        tag: standby
         task: start_replication
       - service: pgpool-II
         task: configure
@@ -89,7 +89,7 @@ tasks:
     tag: master
     operations:
       - execute: |
-          rm -rf {{backup_directory}}
+          rm -rf {{backup_directory}}/*
           sudo -u postgres pg_basebackup -D {{backup_directory}} --xlog --verbose -h 127.0.0.1 -U replication
           chown -R amandabackup:disk {{backup_directory}}
 
@@ -103,7 +103,7 @@ tasks:
           key: cloudconductor/postgresql/failover-event/lock
           value: true
       - service:
-          name: posgresql-9.4
+          name: postgresql-9.4
           action: stop
       - execute: |
           rm -rf /var/lib/pgsql/9.4/data/*
@@ -116,32 +116,27 @@ tasks:
       - consul-kvs:
           action: delete
           key: cloudconductor/postgresql/failover-event/lock
-      - task:
-          name: configure
 
   start_replication:
-    description: Restore database on secondary
+    description: Restore database on standby
     service: postgresql
     tag: standby
     operations:
       - service:
-          name: postgresql
+          name: postgresql-9.4
           action: stop
       - execute: |
-          json=curl http://localhost:8500/v1/catalog/service/postgresql?tag=primary
-          primary_ip=`cat $json | jq '.[] | .Address' | sed -e 's/[^"]*"\([^"]*\)".*/\1/'`
+          json=`curl http://localhost:8500/v1/catalog/service/postgresql?tag=primary`
+          primary_ip=`echo $json | jq '.[] | .Address' | sed -e 's/[^"]*"\([^"]*\)".*/\1/'`
 
-          rm -rf {{backup_directory}}
-          mkdir -p {{backup_directory}}
-          chown amandabackup:disk {{backup_directory}}
-          chmod 777 {{backup_directory}}
-          sudo -u postgres pg_basebackup -d {{backup_directory}} --xlog --verbose -h {{primary_ip}} -U replication
+          rm -rf {{backup_directory}}/*
+          sudo -u postgres pg_basebackup -D {{backup_directory}} --xlog --verbose -h $primary_ip -U replication
           rm -rf /var/lib/pgsql/9.4/data/*
-          mv {{restore_dir}}/* /var/lib/pgsql/9.4/data
+          mv {{backup_directory}}/* /var/lib/pgsql/9.4/data
           chown -R postgres:postgres /var/lib/pgsql/9.4/data
           chmod 700 /var/lib/pgsql/9.4/data
           mv /var/lib/pgsql/9.4/data/recovery.done /var/lib/pgsql/9.4/data/recovery.conf
-          sed -ri "s/host=[^ ]+ /host={{primary_ip}} /" /var/lib/pgsql/9.4/data/recovery.conf
+          sed -ri "s/host=[^ ]+ /host=$primary_ip /" /var/lib/pgsql/9.4/data/recovery.conf
       - service:
-          name: postgresql
+          name: postgresql-9.4
           action: start
