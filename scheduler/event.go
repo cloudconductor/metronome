@@ -2,26 +2,34 @@ package scheduler
 
 import "fmt"
 
-type DispatchTask struct {
-	Service string
-	Tag     string
-	Task    string
-}
-
 type Event struct {
 	Pattern      string
 	Name         string
 	Description  string
 	Priority     int
-	OrderedTasks []DispatchTask `json:"ordered_tasks"`
+	OrderedTasks []EventTask `json:"ordered_tasks"`
 	Task         string
 }
+
+type Events []Event
 
 func (e *Event) SetPattern(pattern string) {
 	e.Pattern = pattern
 }
 
-func (e *Event) Run(vars map[string]string) error {
+func (e *Event) Run(scheduler *Scheduler) error {
+	var tasks []EventTask
+	if e.Task != "" {
+		tasks = []EventTask{EventTask{Pattern: e.Pattern, Task: e.Task}}
+	} else {
+		tasks = e.OrderedTasks
+	}
+
+	for _, et := range tasks {
+		if err := et.Run(scheduler); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -37,13 +45,25 @@ func (e Event) String() string {
 
 	if len(e.OrderedTasks) > 0 {
 		s += "OrderedTasks:\n"
-		for i, v := range e.OrderedTasks {
-			if v.Tag == "" {
-				s += fmt.Sprintf("  %d: Service: %s, Task: %s\n", i, v.Service, v.Task)
+		for i, et := range e.OrderedTasks {
+			if et.Tag == "" {
+				s += fmt.Sprintf("  %d: Service: %s, Task: %s\n", i, et.Service, et.Task)
 			} else {
-				s += fmt.Sprintf("  %d: Service: %s, Tag: %s, Task: %s\n", i, v.Service, v.Tag, v.Task)
+				s += fmt.Sprintf("  %d: Service: %s, Tag: %s, Task: %s\n", i, et.Service, et.Tag, et.Task)
 			}
 		}
 	}
 	return s
+}
+
+func (e Events) Len() int {
+	return len(e)
+}
+
+func (e Events) Swap(i, j int) {
+	e[i], e[j] = e[j], e[i]
+}
+
+func (e Events) Less(i, j int) bool {
+	return e[i].Priority < e[j].Priority
 }

@@ -145,3 +145,8 @@ func clearSlice(items interface{}) {
 	v := reflect.ValueOf(items).Elem()
 	v.Set(reflect.MakeSlice(t, 0, 0))
 }
+
+func (q *Queue) Clear() error {
+	_, err := q.Client.KV().Delete(q.Key, &api.WriteOptions{})
+	return err
+}

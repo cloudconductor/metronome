@@ -3,9 +3,7 @@ package task
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"scheduler/operation"
-	"scheduler/util"
 )
 
 type Task struct {
@@ -66,15 +64,6 @@ func (t *Task) SetPattern(pattern string) {
 }
 
 func (t *Task) Run(vars map[string]string) error {
-	node, err := os.Hostname()
-	if err != nil {
-		return err
-	}
-
-	if !util.HasCatalogRecord(node, t.Filter.Service, t.Filter.Tag) {
-		fmt.Printf("Ignore task %s\n", t.Name)
-		return nil
-	}
 	fmt.Printf("Task %s has started\n", t.Name)
 	for _, o := range t.Operations {
 		err := o.Run(vars)

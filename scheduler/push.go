@@ -13,6 +13,9 @@ import (
 
 func Push() (string, error) {
 	l, err := util.Consul().LockKey(LOCK_KEY)
+	if err != nil {
+		return "", err
+	}
 	_, err = l.Lock(nil)
 	if err != nil {
 		return "", err

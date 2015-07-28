@@ -1,24 +1,19 @@
 package scheduler
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"scheduler/config"
-	"scheduler/queue"
 	"scheduler/util"
-	"strings"
-	"time"
+	"sort"
 
 	"github.com/ghodss/yaml"
-
-	"github.com/hashicorp/consul/api"
 )
 
 const EVENT_QUEUE_KEY = "scheduler/event_queue"
+const PROGRESS_QUEUE_KEY = "scheduler/progress_task_queue"
 const LOCK_KEY = "scheduler/event_queue/lock"
 
 type Scheduler struct {
@@ -37,33 +32,6 @@ func NewScheduler() (*Scheduler, error) {
 
 	fmt.Println("Scheduler initialized")
 	return scheduler, nil
-}
-
-func (scheduler *Scheduler) Run() {
-	err := scheduler.connect()
-	if err != nil {
-		panic(err)
-	}
-
-	eq := &queue.Queue{Client: util.Consul(), Key: EVENT_QUEUE_KEY}
-
-	for {
-		fmt.Println(time.Now())
-		var event api.UserEvent
-		err, found := eq.DeQueue(&event)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		if found {
-			fmt.Printf("Dispatch event (ID: %s, Name: %s)\n", event.ID, event.Name)
-			err = scheduler.Dispatch(event.Name)
-			if err != nil {
-				fmt.Println(err)
-			}
-		}
-		time.Sleep(1 * time.Second)
-	}
 }
 
 func (scheduler *Scheduler) load() error {
@@ -100,84 +68,15 @@ func (scheduler *Scheduler) load() error {
 	return nil
 }
 
-func (scheduler *Scheduler) connect() error {
-	var err error
-	scheduler.node, err = os.Hostname()
-	if err != nil {
-		return err
-	}
-
-	return scheduler.registerServer()
-}
-
-func (scheduler *Scheduler) Dispatch(trigger string) error {
-	events := scheduler.filter(trigger)
-	if len(events) == 0 {
-		return errors.New(fmt.Sprintf("Event %s is not defined", trigger))
-	}
-	for _, e := range events {
-		if err := e.Run(scheduler.schedules[e.Pattern].Variables); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (scheduler *Scheduler) filter(trigger string) []*Event {
-	var events []*Event
+func (scheduler *Scheduler) sortedEvents(name string) Events {
+	var events Events
 	for _, v := range scheduler.schedules {
-		for _, e := range v.Events {
-			if e.Name == trigger {
-				events = append(events, e)
-			}
+		e, found := v.Events[name]
+		if !found {
+			continue
 		}
+		events = append(events, *e)
 	}
+	sort.Sort(events)
 	return events
-}
-
-func (s *Scheduler) registerServer() error {
-	var key = "cloudconductor/servers/" + s.node
-	var c *api.Client = util.Consul()
-	kv, _, err := c.KV().Get(key, &api.QueryOptions{})
-	if err != nil {
-		return err
-	}
-
-	if kv == nil {
-		kv = &api.KVPair{Key: key}
-	}
-
-	m := make(map[string]interface{})
-	m["roles"] = strings.Split(config.Role, ",")
-	m["private_ip"], err = getAddress(s.node)
-	if err != nil {
-		return err
-	}
-
-	kv.Value, err = json.Marshal(m)
-	if err != nil {
-		return err
-	}
-
-	_, err = c.KV().Put(kv, &api.WriteOptions{})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func getAddress(node string) (string, error) {
-	nodes, _, err := util.Consul().Catalog().Nodes(&api.QueryOptions{})
-	if err != nil {
-		return "", err
-	}
-	for _, n := range nodes {
-		if n.Node == node {
-			return n.Address, nil
-		}
-	}
-
-	return "", errors.New("Current node does not found in consul catalog")
 }
