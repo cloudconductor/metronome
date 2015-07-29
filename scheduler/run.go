@@ -51,18 +51,17 @@ func (s *Scheduler) polling() error {
 		return err
 	}
 
-	task := eventTasks[0]
 	switch {
 	case len(eventTasks) == 0:
 		return s.dispatchEvent()
-	case task.Runnable(s.node):
+	case eventTasks[0].Runnable(s.node):
 		//	runTask is parallelizable
 		l.Unlock()
-		return s.runTask(task)
-	case task.IsFinished():
-		return s.finishTask(task)
+		return s.runTask(eventTasks[0])
+	case eventTasks[0].IsFinished():
+		return s.finishTask(eventTasks[0])
 	default:
-		fmt.Printf("Wait a task will have been finished by other instance(Task: %s, Service: %s, Tag: %s)\n", task.Task, task.Service, task.Tag)
+		fmt.Printf("Wait a task will have been finished by other instance(Task: %s, Service: %s, Tag: %s)\n", eventTasks[0].Task, eventTasks[0].Service, eventTasks[0].Tag)
 	}
 	return nil
 }
