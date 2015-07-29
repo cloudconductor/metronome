@@ -179,36 +179,36 @@ func (s *Scheduler) runTask(task EventTask) error {
 }
 
 func (s *Scheduler) finishTask(task EventTask) error {
-	//	Log finishing task as TaskResult on KVS when finished task over all nodes
-	nodeResults, err := getNodeTaskResults(task.ID, task.No)
+	pq := &queue.Queue{Client: util.Consul(), Key: PROGRESS_QUEUE_KEY}
+
+	result, err := task.GetResult()
 	if err != nil {
 		return err
 	}
+
+	nodeResults, err := result.GetNodeResults()
+	if err != nil {
+		return err
+	}
+
+	//	Collect task results over all nodes
 	status := "success"
 	for _, nr := range nodeResults {
 		if nr.Status == "error" {
 			status = "error"
 			// remove following tasks in progress task queue when some error has been occurred
-			pq := &queue.Queue{Client: util.Consul(), Key: PROGRESS_QUEUE_KEY}
 			pq.Clear()
 		}
 	}
-	result, err := getTaskResult(task.ID, task.No)
-	if err != nil {
-		return err
-	}
-	if result == nil {
-		result = &TaskResult{EventID: task.ID, No: task.No, Name: task.Task, Status: "inprogress", StartedAt: time.Now()}
-	}
+
+	//	Log finishing task as TaskResult on KVS
 	result.Status = status
 	result.FinishedAt = time.Now()
-	err = result.Save()
-	if err != nil {
+	if err := result.Save(); err != nil {
 		return err
 	}
 
 	//	Dequeue task from task queue when finished task over all all nodes
-	pq := &queue.Queue{Client: util.Consul(), Key: PROGRESS_QUEUE_KEY}
 	var dummy EventTask
 	err, found := pq.DeQueue(&dummy)
 	if err != nil || !found {
@@ -217,8 +217,7 @@ func (s *Scheduler) finishTask(task EventTask) error {
 
 	//	Log finishing event as EventResult on KVS when finished all task in a progress task queue
 	var tasks []EventTask
-	err = pq.Items(&tasks)
-	if err != nil {
+	if err := pq.Items(&tasks); err != nil {
 		return err
 	}
 	if len(tasks) == 0 {
@@ -226,11 +225,9 @@ func (s *Scheduler) finishTask(task EventTask) error {
 		if err != nil {
 			return err
 		}
-		//	TODO: collect results of all tasks under an event
 		eventResult.Status = status
 		eventResult.FinishedAt = time.Now()
-		err = eventResult.Save()
-		if err != nil {
+		if err := eventResult.Save(); err != nil {
 			return err
 		}
 	}

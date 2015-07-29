@@ -60,6 +60,18 @@ func (et *EventTask) Run(scheduler *Scheduler) error {
 	}
 }
 
+func (et *EventTask) GetResult() (*TaskResult, error) {
+	result, err := getTaskResult(et.ID, et.No)
+	if err != nil {
+		return nil, err
+	}
+
+	if result == nil {
+		result = &TaskResult{EventID: et.ID, No: et.No, Name: et.Task, Status: "inprogress", StartedAt: time.Now()}
+	}
+	return result, nil
+}
+
 func (et *EventTask) WriteStartLog(node string) error {
 	//	Log starting task as TaskResult on KVS
 	result, err := getTaskResult(et.ID, et.No)

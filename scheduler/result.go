@@ -78,6 +78,29 @@ func (r *NodeTaskResult) IsFinished() bool {
 	return r.Status == "success" || r.Status == "error"
 }
 
+func (r *TaskResult) GetNodeResults() ([]NodeTaskResult, error) {
+	var results []NodeTaskResult
+
+	prefix := EVENT_RESULT_KEY + "/" + r.EventID + "/" + strconv.Itoa(r.No)
+	kvs, _, err := util.Consul().KV().List(prefix, &api.QueryOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, kv := range kvs {
+		node := strings.TrimPrefix(kv.Key, prefix)
+		if node == "" {
+			continue
+		}
+		result, err := getNodeTaskResult(r.EventID, r.No, node)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, *result)
+	}
+	return results, nil
+}
+
 func getEventResult(id string) (*EventResult, error) {
 	var result EventResult
 	key := EVENT_RESULT_KEY + "/" + id
@@ -96,29 +119,6 @@ func getTaskResult(id string, no int) (*TaskResult, error) {
 		return nil, err
 	}
 	return &result, err
-}
-
-func getNodeTaskResults(id string, no int) ([]NodeTaskResult, error) {
-	var results []NodeTaskResult
-
-	prefix := EVENT_RESULT_KEY + "/" + id + "/" + strconv.Itoa(no)
-	kvs, _, err := util.Consul().KV().List(prefix, &api.QueryOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	for _, kv := range kvs {
-		node := strings.TrimPrefix(kv.Key, prefix)
-		if node == "" {
-			continue
-		}
-		result, err := getNodeTaskResult(id, no, node)
-		if err != nil {
-			return nil, err
-		}
-		results = append(results, *result)
-	}
-	return results, nil
 }
 
 func getNodeTaskResult(id string, no int, node string) (*NodeTaskResult, error) {
