@@ -33,6 +33,8 @@ var (
 	BaseDir string
 
 	Role string
+
+	Debug bool
 )
 
 func init() {
@@ -54,6 +56,8 @@ func init() {
 	flag.StringVar(&BaseDir, "base-dir", "/opt/cloudconductor", "CloudConductor base dir(default: /opt/cloudconductor))")
 
 	flag.StringVar(&Role, "role", "", "Role names of self instance(ex. \"-role web, ap\")")
+
+	flag.BoolVar(&Debug, "debug", false, "Debug mode enabled(default: false)")
 
 	if args, err := conflag.ArgsFrom(CONF_PATH); err == nil {
 		flag.CommandLine.Parse(args)

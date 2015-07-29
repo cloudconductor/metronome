@@ -302,8 +302,10 @@ func (o *ChefOperation) executeBerkshelf() error {
 }
 
 func (o *ChefOperation) executeChef(conf string, json string) error {
-	defer os.Remove(conf)
-	defer os.Remove(json)
+	if !config.Debug {
+		defer os.Remove(conf)
+		defer os.Remove(json)
+	}
 
 	fmt.Printf("Execute chef(conf: %s, json: %s)\n", conf, json)
 	cmd := exec.Command("chef-solo", "-c", conf, "-j", json)

@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -22,6 +23,13 @@ func (s *Scheduler) Run() {
 
 	for {
 		time.Sleep(1 * time.Second)
+
+		if config.Debug {
+			fmt.Println(time.Now())
+			fmt.Println("Wait at before polling until enter key has been pressed")
+			scanner := bufio.NewScanner(os.Stdin)
+			scanner.Scan()
+		}
 
 		err := s.polling()
 		if err != nil {
@@ -49,6 +57,17 @@ func (s *Scheduler) polling() error {
 	err = pq.Items(&eventTasks)
 	if err != nil {
 		return err
+	}
+
+	if config.Debug {
+		fmt.Println("-------- Progress Task Queue --------")
+		nodes, _, _ := util.Consul().Catalog().Nodes(&api.QueryOptions{})
+		for _, et := range eventTasks {
+			fmt.Printf("Task: %s, %s, %s\n", et.Task, et.Service, et.Tag)
+			for _, n := range nodes {
+				fmt.Printf("%s: %t\n", n.Node, et.Runnable(n.Node))
+			}
+		}
 	}
 
 	switch {
