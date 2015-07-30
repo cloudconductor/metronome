@@ -182,6 +182,10 @@ func (s *Scheduler) dispatchEvent() error {
 }
 
 func (s *Scheduler) runTask(task EventTask) error {
+	var b bytes.Buffer
+	writer := io.MultiWriter(&b, os.Stdout)
+	log.SetOutput(writer)
+
 	log.Infof("Run task(Task: %s, ID: %s, No: %d, Service: %s, Tag: %s)", task.Task, task.ID, task.No, task.Service, task.Tag)
 
 	if err := task.WriteStartLog(s.node); err != nil {

@@ -38,6 +38,7 @@ type NodeTaskResult struct {
 	No         int
 	Node       string
 	Status     string
+	Log        string
 	StartedAt  time.Time
 	FinishedAt time.Time
 }
@@ -63,7 +64,12 @@ func (r *TaskResult) Save() error {
 }
 
 func (r *NodeTaskResult) Save() error {
-	return putResult(r)
+	if err := putResult(r); err != nil {
+		return err
+	}
+	kv := &api.KVPair{Key: r.Key() + "/log", Value: []byte(r.Log)}
+	_, err := util.Consul().KV().Put(kv, &api.WriteOptions{})
+	return err
 }
 
 func (r *EventResult) IsFinished() bool {
@@ -89,7 +95,7 @@ func (r *TaskResult) GetNodeResults() ([]NodeTaskResult, error) {
 
 	for _, kv := range kvs {
 		node := strings.TrimPrefix(kv.Key, prefix)
-		if node == "" {
+		if node == "" || strings.HasSuffix(node, "/log") {
 			continue
 		}
 		result, err := getNodeTaskResult(r.EventID, r.No, node)
@@ -127,6 +133,15 @@ func getNodeTaskResult(id string, no int, node string) (*NodeTaskResult, error) 
 	found, err := getResult(key, &result)
 	if !found || err != nil {
 		return nil, err
+	}
+
+	//	Read log from /scheduler/result/[EventID]/[No]/[Node]/log
+	kv, _, err := util.Consul().KV().Get(key+"/log", &api.QueryOptions{})
+	if err != nil {
+		return nil, err
+	}
+	if kv != nil {
+		result.Log = string(kv.Value)
 	}
 	return &result, err
 }
