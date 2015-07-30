@@ -2,12 +2,12 @@ package scheduler
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"scheduler/queue"
 	"scheduler/util"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/hashicorp/consul/api"
 )
 
@@ -46,7 +46,7 @@ func pushSingleEvent(eq *queue.Queue, re api.UserEvent) error {
 
 	for _, se := range storedEvents {
 		if se.ID == re.ID {
-			fmt.Printf("Receive event was already registerd in a queue(ID: %s)\n", re.ID)
+			log.Infof("Receive event was already registerd in a queue(ID: %s)", re.ID)
 			return nil
 		}
 	}
@@ -56,6 +56,6 @@ func pushSingleEvent(eq *queue.Queue, re api.UserEvent) error {
 		return err
 	}
 
-	fmt.Printf("Push event to queue(ID: %s, Name: %s)\n", re.ID, re.Name)
+	log.Infof("Push event to queue(ID: %s, Name: %s)", re.ID, re.Name)
 	return nil
 }

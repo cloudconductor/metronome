@@ -3,11 +3,11 @@ package queue
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math/rand"
 	"reflect"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/hashicorp/consul/api"
 )
 
@@ -31,7 +31,7 @@ func (q *Queue) EnQueue(item interface{}) error {
 			return err
 		}
 
-		fmt.Println("[Warn]", ErrUpdatedFromOther)
+		log.Warn(ErrUpdatedFromOther)
 		time.Sleep(time.Duration(rand.Intn(1000)+1000) * time.Millisecond)
 	}
 }
@@ -43,7 +43,7 @@ func (q *Queue) DeQueue(item interface{}) (error, bool) {
 			return err, found
 		}
 
-		fmt.Println("[Warn]", ErrUpdatedFromOther)
+		log.Warn(ErrUpdatedFromOther)
 		time.Sleep(time.Duration(rand.Intn(1000)+1000) * time.Millisecond)
 	}
 }

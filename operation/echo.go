@@ -2,8 +2,9 @@ package operation
 
 import (
 	"encoding/json"
-	"fmt"
 	"scheduler/util"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 type EchoOperation struct {
@@ -18,7 +19,7 @@ func NewEchoOperation(v json.RawMessage) *EchoOperation {
 }
 
 func (o *EchoOperation) Run(vars map[string]string) error {
-	fmt.Println(util.ParseString(o.message, vars))
+	log.Info("echo: " + util.ParseString(o.message, vars))
 	return nil
 }
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"scheduler/util"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/hashicorp/consul/api"
 )
 
@@ -29,7 +30,7 @@ func (o *ConsulKVSOperation) Run(vars map[string]string) error {
 	case "delete":
 		return o.delete(vars)
 	default:
-		return errors.New(fmt.Sprintf("[consul-kvs]Operation can't support %s action", o.Action))
+		return errors.New(fmt.Sprintf("Operation can't support %s action", o.Action))
 	}
 	return nil
 }
@@ -37,13 +38,13 @@ func (o *ConsulKVSOperation) Run(vars map[string]string) error {
 func (o *ConsulKVSOperation) put(vars map[string]string) error {
 	kv := &api.KVPair{Key: o.Key, Value: []byte(o.Value)}
 	_, err := util.Consul().KV().Put(kv, &api.WriteOptions{})
-	fmt.Printf("[consul-kvs]: Put %s to %s.\n", o.Value, o.Key)
+	log.Infof("Put %s to %s", o.Value, o.Key)
 	return err
 }
 
 func (o *ConsulKVSOperation) delete(vars map[string]string) error {
 	_, err := util.Consul().KV().Delete(o.Key, &api.WriteOptions{})
-	fmt.Printf("[consul-kvs]: Delete %s.\n", o.Key)
+	log.Infof("Delete %s", o.Key)
 	return err
 }
 

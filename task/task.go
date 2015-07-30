@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"scheduler/operation"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 type Task struct {
@@ -52,7 +54,6 @@ func (t *Task) UnmarshalJSON(d []byte) error {
 	}
 	u.unmarshalOperations([]byte(m["operations"]), &t.Operations)
 
-	fmt.Printf("Loaded %v\n", t)
 	return u.err
 }
 
@@ -64,15 +65,17 @@ func (t *Task) SetPattern(pattern string) {
 }
 
 func (t *Task) Run(vars map[string]string) error {
-	fmt.Printf("Task %s has started\n", t.Name)
+	log.Infof("Task %s has started", t.Name)
 	for _, o := range t.Operations {
+		log.Infof("Operation %s has started", o.String())
 		err := o.Run(vars)
 		if err != nil {
-			fmt.Printf("Task %s has failed\n", t.Name)
+			log.Errorf("Task %s has failed", t.Name)
 			return err
 		}
+		log.Infof("Operation %s has finished successfully", o.String())
 	}
-	fmt.Printf("Task %s has finished\n", t.Name)
+	log.Infof("Task %s has finished successfully", t.Name)
 	return nil
 }
 

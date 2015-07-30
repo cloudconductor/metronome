@@ -2,11 +2,12 @@ package operation
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"os/exec"
 	"scheduler/util"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 type ExecuteOperation struct {
@@ -26,7 +27,7 @@ func (o *ExecuteOperation) Run(vars map[string]string) error {
 	cmd := exec.Command(os.Getenv("SHELL"))
 	cmd.Stdin = strings.NewReader(s)
 	out, err := cmd.CombinedOutput()
-	fmt.Println(string(out))
+	log.Debug(string(out))
 	return err
 }
 

@@ -2,9 +2,10 @@ package scheduler
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
+	"io"
 	"os"
 	"scheduler/config"
 	"scheduler/queue"
@@ -12,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/hashicorp/consul/api"
 )
 
@@ -25,15 +27,15 @@ func (s *Scheduler) Run() {
 		time.Sleep(1 * time.Second)
 
 		if config.Debug {
-			fmt.Println(time.Now())
-			fmt.Println("Wait at before polling until enter key has been pressed")
+			log.Debug(time.Now())
+			log.Debug("Wait at before polling until enter key has been pressed")
 			scanner := bufio.NewScanner(os.Stdin)
 			scanner.Scan()
 		}
 
 		err := s.polling()
 		if err != nil {
-			fmt.Printf("[Error] %s\n", err)
+			log.Error(err)
 			continue
 		}
 	}
@@ -60,12 +62,12 @@ func (s *Scheduler) polling() error {
 	}
 
 	if config.Debug {
-		fmt.Println("-------- Progress Task Queue --------")
+		log.Debug("-------- Progress Task Queue --------")
 		nodes, _, _ := util.Consul().Catalog().Nodes(&api.QueryOptions{})
 		for _, et := range eventTasks {
-			fmt.Printf("Task: %s, %s, %s\n", et.Task, et.Service, et.Tag)
+			log.Debugf("Task: %s, %s, %s", et.Task, et.Service, et.Tag)
 			for _, n := range nodes {
-				fmt.Printf("%s: %t\n", n.Node, et.Runnable(n.Node))
+				log.Debugf("%s: %t", n.Node, et.Runnable(n.Node))
 			}
 		}
 	}
@@ -80,7 +82,7 @@ func (s *Scheduler) polling() error {
 	case eventTasks[0].IsFinished():
 		return s.finishTask(eventTasks[0])
 	default:
-		fmt.Printf("Wait a task will have been finished by other instance(Task: %s, Service: %s, Tag: %s)\n", eventTasks[0].Task, eventTasks[0].Service, eventTasks[0].Tag)
+		log.Debugf("Wait a task will have been finished by other instance(Task: %s, Service: %s, Tag: %s)", eventTasks[0].Task, eventTasks[0].Service, eventTasks[0].Tag)
 	}
 	return nil
 }
@@ -153,7 +155,7 @@ func (s *Scheduler) dispatchEvent() error {
 	if !found {
 		return nil
 	}
-	fmt.Printf("Dispatch event(ID: %s, Name: %s)\n", consulEvent.ID, consulEvent.Name)
+	log.Infof("Dispatch event(ID: %s, Name: %s)", consulEvent.ID, consulEvent.Name)
 
 	//	Collect events over all task.yml and dispatch tasks to progress task queue
 	events := s.sortedEvents(consulEvent.Name)
@@ -180,7 +182,7 @@ func (s *Scheduler) dispatchEvent() error {
 }
 
 func (s *Scheduler) runTask(task EventTask) error {
-	fmt.Printf("Run task(Task: %s, ID: %s, No: %d, Service: %s, Tag: %s)\n", task.Task, task.ID, task.No, task.Service, task.Tag)
+	log.Infof("Run task(Task: %s, ID: %s, No: %d, Service: %s, Tag: %s)", task.Task, task.ID, task.No, task.Service, task.Tag)
 
 	if err := task.WriteStartLog(s.node); err != nil {
 		return err
@@ -189,14 +191,15 @@ func (s *Scheduler) runTask(task EventTask) error {
 	status := "success"
 	if err := task.Run(s); err != nil {
 		status = "error"
-		fmt.Println("[Error] Following error has occurred while executing task")
-		fmt.Println(err)
+		log.Error("Following error has occurred while executing task")
+		log.Error(err)
 	}
 
-	return task.WriteFinishLog(s.node, status)
+	return task.WriteFinishLog(s.node, status, b.String())
 }
 
 func (s *Scheduler) finishTask(task EventTask) error {
+	log.Infof("Finish task(Task: %s, ID: %s, No: %d, Service: %s, Tag: %s)", task.Task, task.ID, task.No, task.Service, task.Tag)
 	pq := &queue.Queue{Client: util.Consul(), Key: PROGRESS_QUEUE_KEY}
 
 	result, err := task.GetResult()

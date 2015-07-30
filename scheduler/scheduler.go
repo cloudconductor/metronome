@@ -9,6 +9,7 @@ import (
 	"scheduler/util"
 	"sort"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/ghodss/yaml"
 )
 
@@ -30,7 +31,7 @@ func NewScheduler() (*Scheduler, error) {
 		return nil, err
 	}
 
-	fmt.Println("Scheduler initialized")
+	log.Info("Scheduler initialized")
 	return scheduler, nil
 }
 
@@ -47,7 +48,7 @@ func (scheduler *Scheduler) load() error {
 
 		path := filepath.Join(config.BaseDir, "patterns", e.Name(), "task.yml")
 		if !util.Exists(path) {
-			fmt.Printf("Schedule file does not found(%s)\n", path)
+			log.Warnf("Schedule file does not found(%s)", path)
 			continue
 		}
 
@@ -63,7 +64,7 @@ func (scheduler *Scheduler) load() error {
 
 		schedule.PostUnmarshal(e.Name())
 		scheduler.schedules[e.Name()] = schedule
-		fmt.Println(&schedule)
+		log.Debug(&schedule)
 	}
 	return nil
 }

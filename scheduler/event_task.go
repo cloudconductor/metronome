@@ -90,7 +90,7 @@ func (et *EventTask) WriteStartLog(node string) error {
 	return nodeResult.Save()
 }
 
-func (et *EventTask) WriteFinishLog(node string, status string) error {
+func (et *EventTask) WriteFinishLog(node string, status string, log string) error {
 	//	Log finishing task on node as NodeTaskResult on KVS
 	nodeResult, err := getNodeTaskResult(et.ID, et.No, node)
 	if err != nil {
@@ -98,6 +98,7 @@ func (et *EventTask) WriteFinishLog(node string, status string) error {
 	}
 	nodeResult.FinishedAt = time.Now()
 	nodeResult.Status = status
+	nodeResult.Log = log
 
 	return nodeResult.Save()
 }

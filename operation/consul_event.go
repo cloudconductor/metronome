@@ -2,9 +2,9 @@ package operation
 
 import (
 	"encoding/json"
-	"fmt"
 	"scheduler/util"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/hashicorp/consul/api"
 )
 
@@ -26,7 +26,7 @@ func NewConsulEventOperation(v json.RawMessage) *ConsulEventOperation {
 func (o *ConsulEventOperation) Run(vars map[string]string) error {
 	event := &api.UserEvent{Name: o.Name, ServiceFilter: o.Filter.Service, TagFilter: o.Filter.Tag}
 	id, _, err := util.Consul().Event().Fire(event, &api.WriteOptions{})
-	fmt.Printf("[consul-event]: Fire %s event(ID: %s)", o.Name, id)
+	log.Infof("consul-event: Fire %s event(ID: %s)", o.Name, id)
 	return err
 }
 

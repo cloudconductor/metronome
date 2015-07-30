@@ -1,30 +1,32 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"os"
+	"scheduler/config"
+	"scheduler/util"
+
+	log "github.com/Sirupsen/logrus"
 )
 
-var stdlog, errlog *log.Logger
-
-func init() {
-	stdlog = log.New(os.Stdout, "", log.Ldate|log.Ltime)
-	errlog = log.New(os.Stderr, "", log.Ldate|log.Ltime)
-}
-
 func main() {
+	log.SetFormatter(&util.LogFormatter{})
+	if config.Debug {
+		log.SetLevel(log.DebugLevel)
+	} else {
+		log.SetLevel(log.InfoLevel)
+	}
+
 	service, err := NewService("scheduler", "Scheduler for consul event")
 	if err != nil {
-		errlog.Println("Error: ", err)
+		log.Error(err)
 		os.Exit(1)
 	}
 
 	status, err := service.Manage()
 	if err != nil {
-		errlog.Println(status, "\nError: ", err)
+		log.Error(err)
 		os.Exit(1)
 	}
 
-	fmt.Println(status)
+	log.Info(status)
 }

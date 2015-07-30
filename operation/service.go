@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"scheduler/config"
 	"scheduler/util"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 type ServiceOperation struct {
@@ -36,7 +38,7 @@ func (o *ServiceOperation) Run(vars map[string]string) error {
 	}
 
 	out, err := cmd.CombinedOutput()
-	fmt.Println(string(out))
+	log.Debug(string(out))
 	return err
 }
 
