@@ -67,7 +67,10 @@ func (r *NodeTaskResult) Save() error {
 	if err := putResult(r); err != nil {
 		return err
 	}
-	kv := &api.KVPair{Key: r.Key() + "/log", Value: []byte(r.Log)}
+	kv := &api.KVPair{
+		Key:   r.Key() + "/log",
+		Value: []byte(r.Log),
+	}
 	_, err := util.Consul().KV().Put(kv, &api.WriteOptions{})
 	return err
 }
@@ -168,7 +171,10 @@ func putResult(result Result) error {
 		return err
 	}
 
-	kv := api.KVPair{Key: result.Key(), Value: d}
+	kv := api.KVPair{
+		Key:   result.Key(),
+		Value: d,
+	}
 	_, err = util.Consul().KV().Put(&kv, &api.WriteOptions{})
 	return err
 }

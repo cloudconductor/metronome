@@ -20,7 +20,12 @@ func (e *Event) SetPattern(pattern string) {
 func (e *Event) Run(scheduler *Scheduler) error {
 	var tasks []EventTask
 	if e.Task != "" {
-		tasks = []EventTask{EventTask{Pattern: e.Pattern, Task: e.Task}}
+		tasks = []EventTask{
+			EventTask{
+				Pattern: e.Pattern,
+				Task:    e.Task,
+			},
+		}
 	} else {
 		tasks = e.OrderedTasks
 	}

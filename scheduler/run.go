@@ -52,7 +52,10 @@ func (s *Scheduler) polling() error {
 
 	//	Polling tasks from queue
 	var eventTasks []EventTask
-	pq := &queue.Queue{Client: util.Consul(), Key: PROGRESS_QUEUE_KEY}
+	pq := &queue.Queue{
+		Client: util.Consul(),
+		Key:    PROGRESS_QUEUE_KEY,
+	}
 	if err := pq.Items(&eventTasks); err != nil {
 		return err
 	}
@@ -139,8 +142,14 @@ func getAddress(node string) (string, error) {
 }
 
 func (s *Scheduler) dispatchEvent() error {
-	pq := &queue.Queue{Client: util.Consul(), Key: PROGRESS_QUEUE_KEY}
-	eq := &queue.Queue{Client: util.Consul(), Key: EVENT_QUEUE_KEY}
+	pq := &queue.Queue{
+		Client: util.Consul(),
+		Key:    PROGRESS_QUEUE_KEY,
+	}
+	eq := &queue.Queue{
+		Client: util.Consul(),
+		Key:    EVENT_QUEUE_KEY,
+	}
 
 	var consulEvent api.UserEvent
 	if err, found := eq.DeQueue(&consulEvent); err != nil || !found {
@@ -162,7 +171,12 @@ func (s *Scheduler) dispatchEvent() error {
 	for _, v := range events {
 		switch {
 		case v.Task != "":
-			pq.EnQueue(EventTask{Pattern: v.Pattern, ID: consulEvent.ID, No: c, Task: v.Task})
+			pq.EnQueue(EventTask{
+				Pattern: v.Pattern,
+				ID:      consulEvent.ID,
+				No:      c,
+				Task:    v.Task,
+			})
 			c += 1
 		case len(v.OrderedTasks) > 0:
 			for _, t := range v.OrderedTasks {
@@ -176,7 +190,12 @@ func (s *Scheduler) dispatchEvent() error {
 	}
 
 	//	Log starting event as EventResult on KVS
-	result = &EventResult{ID: consulEvent.ID, Name: consulEvent.Name, Status: "inprogress", StartedAt: time.Now()}
+	result = &EventResult{
+		ID:        consulEvent.ID,
+		Name:      consulEvent.Name,
+		Status:    "inprogress",
+		StartedAt: time.Now(),
+	}
 	return result.Save()
 }
 
@@ -203,7 +222,10 @@ func (s *Scheduler) runTask(task EventTask) error {
 
 func (s *Scheduler) finishTask(task EventTask) error {
 	log.Infof("Finish task(Task: %s, ID: %s, No: %d, Service: %s, Tag: %s)", task.Task, task.ID, task.No, task.Service, task.Tag)
-	pq := &queue.Queue{Client: util.Consul(), Key: PROGRESS_QUEUE_KEY}
+	pq := &queue.Queue{
+		Client: util.Consul(),
+		Key:    PROGRESS_QUEUE_KEY,
+	}
 
 	result, err := task.GetResult()
 	if err != nil {

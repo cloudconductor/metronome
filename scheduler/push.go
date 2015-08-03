@@ -21,7 +21,10 @@ func Push() (string, error) {
 	}
 	defer l.Unlock()
 
-	eq := &queue.Queue{Client: util.Consul(), Key: EVENT_QUEUE_KEY}
+	eq := &queue.Queue{
+		Client: util.Consul(),
+		Key:    EVENT_QUEUE_KEY,
+	}
 
 	bytes, err := ioutil.ReadAll(os.Stdin)
 	var receiveEvents []api.UserEvent

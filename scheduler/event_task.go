@@ -67,7 +67,13 @@ func (et *EventTask) GetResult() (*TaskResult, error) {
 	}
 
 	if result == nil {
-		result = &TaskResult{EventID: et.ID, No: et.No, Name: et.Task, Status: "inprogress", StartedAt: time.Now()}
+		result = &TaskResult{
+			EventID:   et.ID,
+			No:        et.No,
+			Name:      et.Task,
+			Status:    "inprogress",
+			StartedAt: time.Now(),
+		}
 	}
 	return result, nil
 }
@@ -79,14 +85,26 @@ func (et *EventTask) WriteStartLog(node string) error {
 		return err
 	}
 	if result == nil {
-		result = &TaskResult{EventID: et.ID, No: et.No, Name: et.Task, Status: "inprogress", StartedAt: time.Now()}
+		result = &TaskResult{
+			EventID:   et.ID,
+			No:        et.No,
+			Name:      et.Task,
+			Status:    "inprogress",
+			StartedAt: time.Now(),
+		}
 		if err := result.Save(); err != nil {
 			return err
 		}
 	}
 
 	//	Log starting task on node as NodeTaskResult on KVS
-	nodeResult := &NodeTaskResult{EventID: et.ID, No: et.No, Node: node, Status: "inprogress", StartedAt: time.Now()}
+	nodeResult := &NodeTaskResult{
+		EventID:   et.ID,
+		No:        et.No,
+		Node:      node,
+		Status:    "inprogress",
+		StartedAt: time.Now(),
+	}
 	return nodeResult.Save()
 }
 

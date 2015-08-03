@@ -24,7 +24,11 @@ func NewConsulEventOperation(v json.RawMessage) *ConsulEventOperation {
 }
 
 func (o *ConsulEventOperation) Run(vars map[string]string) error {
-	event := &api.UserEvent{Name: o.Name, ServiceFilter: o.Filter.Service, TagFilter: o.Filter.Tag}
+	event := &api.UserEvent{
+		Name:          o.Name,
+		ServiceFilter: o.Filter.Service,
+		TagFilter:     o.Filter.Tag,
+	}
 	id, _, err := util.Consul().Event().Fire(event, &api.WriteOptions{})
 	log.Infof("consul-event: Fire %s event(ID: %s)", o.Name, id)
 	return err

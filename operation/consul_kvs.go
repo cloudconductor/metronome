@@ -36,7 +36,10 @@ func (o *ConsulKVSOperation) Run(vars map[string]string) error {
 }
 
 func (o *ConsulKVSOperation) put(vars map[string]string) error {
-	kv := &api.KVPair{Key: o.Key, Value: []byte(o.Value)}
+	kv := &api.KVPair{
+		Key:   o.Key,
+		Value: []byte(o.Value),
+	}
 	_, err := util.Consul().KV().Put(kv, &api.WriteOptions{})
 	log.Infof("Put %s to %s", o.Value, o.Key)
 	return err
