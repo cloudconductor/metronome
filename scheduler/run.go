@@ -146,9 +146,17 @@ func (s *Scheduler) dispatchEvent() error {
 	if err, found := eq.DeQueue(&consulEvent); err != nil || !found {
 		return err
 	}
-	log.Infof("Dispatch event(ID: %s, Name: %s)", consulEvent.ID, consulEvent.Name)
+	result, err := getEventResult(consulEvent.ID)
+	if err != nil {
+		return err
+	}
+	if result != nil {
+		log.Debugf("Ignore event(ID: %s, Name: %s) already has been executed", consulEvent.ID, consulEvent.Name)
+		return nil
+	}
 
 	//	Collect events over all task.yml and dispatch tasks to progress task queue
+	log.Infof("Dispatch event(ID: %s, Name: %s)", consulEvent.ID, consulEvent.Name)
 	events := s.sortedEvents(consulEvent.Name)
 	c := 0
 	for _, v := range events {
@@ -168,7 +176,7 @@ func (s *Scheduler) dispatchEvent() error {
 	}
 
 	//	Log starting event as EventResult on KVS
-	result := &EventResult{ID: consulEvent.ID, Name: consulEvent.Name, Status: "inprogress", StartedAt: time.Now()}
+	result = &EventResult{ID: consulEvent.ID, Name: consulEvent.Name, Status: "inprogress", StartedAt: time.Now()}
 	return result.Save()
 }
 
