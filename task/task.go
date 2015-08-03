@@ -65,16 +65,16 @@ func (t *Task) SetPattern(pattern string) {
 }
 
 func (t *Task) Run(vars map[string]string) error {
-	log.Infof("Task %s has started", t.Name)
+	log.Infof("-- Task %s has started", t.Name)
 	for _, o := range t.Operations {
-		log.Infof("Operation %s has started", o.String())
+		log.Infof("---- Operation %s has started", o.String())
 		if err := o.Run(vars); err != nil {
-			log.Errorf("Task %s has failed", t.Name)
+			log.Errorf("---- Operation %s in %s has failed", o.String(), t.Name)
 			return err
 		}
-		log.Infof("Operation %s has finished successfully", o.String())
+		log.Infof("---- Operation %s has finished successfully", o.String())
 	}
-	log.Infof("Task %s has finished successfully", t.Name)
+	log.Infof("-- Task %s has finished successfully", t.Name)
 	return nil
 }
 
