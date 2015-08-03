@@ -27,8 +27,8 @@ events:
         task: configure
 
   deploy:
-    description: Execute setup
-    task: setup
+    description: Execute deploy
+    task: deploy
 
   backup:
     description: Execute backup
