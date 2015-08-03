@@ -13,6 +13,7 @@ type Task struct {
 	Name        string
 	Trigger     string
 	Description string
+	Timeout     int32
 	Filter      Filter
 	Operations  []operation.Operation
 }
@@ -49,6 +50,7 @@ func (t *Task) UnmarshalJSON(d []byte) error {
 	u.unmarshal([]byte(m["name"]), &t.Name)
 	u.unmarshal([]byte(m["trigger"]), &t.Trigger)
 	u.unmarshal([]byte(m["description"]), &t.Description)
+	u.unmarshal([]byte(m["timeout"]), &t.Timeout)
 	if _, ok := m["filter"]; ok {
 		u.unmarshal([]byte(m["filter"]), &t.Filter)
 	}
@@ -86,6 +88,7 @@ func (t *Task) String() string {
 	s += fmt.Sprintf("  Pattern: %s\n", t.Pattern)
 	s += fmt.Sprintf("  Trigger: %s\n", t.Trigger)
 	s += fmt.Sprintf("  Description: %s\n", t.Description)
+	s += fmt.Sprintf("  Timeout: %d\n", t.Timeout)
 	s += fmt.Sprintf("  Filter: %v\n", t.Filter)
 
 	s += "  Operations:\n"

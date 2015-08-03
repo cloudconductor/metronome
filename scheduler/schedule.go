@@ -17,8 +17,7 @@ type Schedule struct {
 }
 
 type TaskDefault struct {
-	Timeout    int32
-	ChefConfig string `json:"chef_config"`
+	Timeout int32
 }
 
 func (s *Schedule) PostUnmarshal(pattern string) {
@@ -29,6 +28,10 @@ func (s *Schedule) PostUnmarshal(pattern string) {
 	}
 	for k, t := range s.Tasks {
 		t.Name = k
+		if t.Timeout == 0 {
+			t.Timeout = s.Default.Timeout
+		}
+
 		t.SetPattern(pattern)
 	}
 }
