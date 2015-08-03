@@ -39,8 +39,7 @@ func init() {
 func UnmarshalOperations(d []byte, operations *[]Operation) error {
 	var result []Operation
 	var list []map[string]json.RawMessage
-	err := json.Unmarshal(d, &list)
-	if err != nil {
+	if err := json.Unmarshal(d, &list); err != nil {
 		return err
 	}
 

@@ -26,8 +26,7 @@ func NewScheduler() (*Scheduler, error) {
 	scheduler := &Scheduler{}
 	scheduler.schedules = make(map[string]Schedule)
 
-	err := scheduler.load()
-	if err != nil {
+	if err := scheduler.load(); err != nil {
 		return nil, err
 	}
 
@@ -57,8 +56,7 @@ func (scheduler *Scheduler) load() error {
 			return errors.New(fmt.Sprintf("Failed to load config file(%s)\n\t%s", path, err))
 		}
 		var schedule Schedule
-		err = yaml.Unmarshal([]byte(d), &schedule)
-		if err != nil {
+		if err := yaml.Unmarshal([]byte(d), &schedule); err != nil {
 			return errors.New(fmt.Sprintf("Failed to unmarshal json(%s)\n\t%s", path, err))
 		}
 

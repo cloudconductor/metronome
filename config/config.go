@@ -75,8 +75,7 @@ func loadUserVariables(path string) map[string]string {
 		return nil
 	}
 
-	err = yaml.Unmarshal(b, &vars)
-	if err != nil {
+	if err := yaml.Unmarshal(b, &vars); err != nil {
 		return nil
 	}
 

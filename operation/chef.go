@@ -48,8 +48,7 @@ func (o *ChefOperation) Run(vars map[string]string) error {
 		return err
 	}
 
-	err = o.executeBerkshelf()
-	if err != nil {
+	if err := o.executeBerkshelf(); err != nil {
 		return err
 	}
 
@@ -116,8 +115,7 @@ func getAttributes(overwriteAttributes map[string]interface{}) (map[string]inter
 	var c *api.Client = util.Consul()
 	kv, _, err := c.KV().Get("cloudconductor/parameters", &api.QueryOptions{})
 	if err == nil && kv != nil {
-		err = json.Unmarshal(kv.Value, &attributes)
-		if err != nil {
+		if err := json.Unmarshal(kv.Value, &attributes); err != nil {
 			return nil, err
 		}
 	} else {
@@ -126,8 +124,7 @@ func getAttributes(overwriteAttributes map[string]interface{}) (map[string]inter
 		attributes["cloudconductor"].(map[string]interface{})["patterns"] = make(map[string]interface{})
 	}
 
-	err = mergeAttributes(attributes, overwriteAttributes)
-	if err != nil {
+	if err := mergeAttributes(attributes, overwriteAttributes); err != nil {
 		return nil, err
 	}
 	return attributes, nil
@@ -143,8 +140,7 @@ func mergeAttributes(src, dst map[string]interface{}) error {
 			patterns[k] = pattern
 		}
 		m := patterns[k].(map[string]interface{})["user_attributes"].(map[string]interface{})
-		err := mergo.MergeWithOverwrite(&m, v)
-		if err != nil {
+		if err := mergo.MergeWithOverwrite(&m, v); err != nil {
 			return errors.New(fmt.Sprintf("Failed to merge attributes(%v)", err))
 		}
 	}
@@ -161,11 +157,10 @@ func getServers() (map[string]interface{}, error) {
 	for _, s := range consulServers {
 		node := strings.TrimPrefix(s.Key, "cloudconductor/servers/")
 		v := make(map[string]interface{})
-		err = json.Unmarshal(s.Value, &v)
-		servers[node] = v
-		if err != nil {
+		if err := json.Unmarshal(s.Value, &v); err != nil {
 			return nil, err
 		}
+		servers[node] = v
 	}
 	return servers, nil
 }
@@ -176,8 +171,7 @@ func extractAttributes(src map[string]interface{}) (map[string]interface{}, erro
 	patterns := src["cloudconductor"].(map[string]interface{})["patterns"].(map[string]interface{})
 	for _, v := range patterns {
 		m := v.(map[string]interface{})["user_attributes"].(map[string]interface{})
-		err := mergo.MergeWithOverwrite(&results, m)
-		if err != nil {
+		if err := mergo.MergeWithOverwrite(&results, m); err != nil {
 			return nil, errors.New(fmt.Sprintf("Failed to merge attributes(%v)", err))
 		}
 	}
@@ -202,8 +196,7 @@ func writeJson(runlist []string, cloudconductor map[string]interface{}, servers 
 	}
 	defer f.Close()
 
-	_, err = f.Write(b)
-	if err != nil {
+	if _, err := f.Write(b); err != nil {
 		return "", err
 	}
 
@@ -222,14 +215,12 @@ func (o *ChefOperation) createConf(vars map[string]string) (string, error) {
 		return "", err
 	}
 
-	err = mergo.MergeWithOverwrite(&m, o.Configurations)
-	if err != nil {
+	if err := mergo.MergeWithOverwrite(&m, o.Configurations); err != nil {
 		return "", err
 	}
 
 	for k, v := range m {
-		_, err = f.WriteString(fmt.Sprintf("%s %s\n", k, convertRubyCode(v)))
-		if err != nil {
+		if _, err := f.WriteString(fmt.Sprintf("%s %s\n", k, convertRubyCode(v))); err != nil {
 			return "", err
 		}
 	}

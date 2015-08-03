@@ -26,8 +26,7 @@ func init() {
 
 func (q *Queue) EnQueue(item interface{}) error {
 	for {
-		err := q.enQueue(item)
-		if err != ErrUpdatedFromOther {
+		if err := q.enQueue(item); err != ErrUpdatedFromOther {
 			return err
 		}
 
@@ -38,8 +37,7 @@ func (q *Queue) EnQueue(item interface{}) error {
 
 func (q *Queue) DeQueue(item interface{}) (error, bool) {
 	for {
-		err, found := q.deQueue(item)
-		if err != ErrUpdatedFromOther {
+		if err, found := q.deQueue(item); err != ErrUpdatedFromOther {
 			return err, found
 		}
 
@@ -61,8 +59,7 @@ func (q *Queue) enQueue(item interface{}) error {
 	}
 
 	if len(entry.Value) > 0 {
-		err = json.Unmarshal(entry.Value, &items)
-		if err != nil {
+		if err := json.Unmarshal(entry.Value, &items); err != nil {
 			return err
 		}
 	}
@@ -92,8 +89,7 @@ func (q *Queue) deQueue(item interface{}) (error, bool) {
 	}
 
 	if len(entry.Value) > 0 {
-		err = json.Unmarshal(entry.Value, &items)
-		if err != nil {
+		if err := json.Unmarshal(entry.Value, &items); err != nil {
 			return err, false
 		}
 	}
@@ -107,8 +103,7 @@ func (q *Queue) deQueue(item interface{}) (error, bool) {
 		return err, false
 	}
 
-	err = json.Unmarshal(d, &item)
-	if err != nil {
+	if err := json.Unmarshal(d, &item); err != nil {
 		return err, false
 	}
 

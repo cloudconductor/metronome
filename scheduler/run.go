@@ -18,8 +18,7 @@ import (
 )
 
 func (s *Scheduler) Run() {
-	err := s.connect()
-	if err != nil {
+	if err := s.connect(); err != nil {
 		panic(err)
 	}
 
@@ -33,8 +32,7 @@ func (s *Scheduler) Run() {
 			scanner.Scan()
 		}
 
-		err := s.polling()
-		if err != nil {
+		if err := s.polling(); err != nil {
 			log.Error(err)
 			continue
 		}
@@ -47,8 +45,7 @@ func (s *Scheduler) polling() error {
 	if err != nil {
 		return err
 	}
-	_, err = l.Lock(nil)
-	if err != nil {
+	if _, err := l.Lock(nil); err != nil {
 		return err
 	}
 	defer l.Unlock()
@@ -56,8 +53,7 @@ func (s *Scheduler) polling() error {
 	//	Polling tasks from queue
 	var eventTasks []EventTask
 	pq := &queue.Queue{Client: util.Consul(), Key: PROGRESS_QUEUE_KEY}
-	err = pq.Items(&eventTasks)
-	if err != nil {
+	if err := pq.Items(&eventTasks); err != nil {
 		return err
 	}
 
@@ -121,8 +117,7 @@ func (s *Scheduler) registerServer() error {
 		return err
 	}
 
-	_, err = c.KV().Put(kv, &api.WriteOptions{})
-	if err != nil {
+	if _, err := c.KV().Put(kv, &api.WriteOptions{}); err != nil {
 		return err
 	}
 
@@ -148,12 +143,8 @@ func (s *Scheduler) dispatchEvent() error {
 	eq := &queue.Queue{Client: util.Consul(), Key: EVENT_QUEUE_KEY}
 
 	var consulEvent api.UserEvent
-	err, found := eq.DeQueue(&consulEvent)
-	if err != nil {
+	if err, found := eq.DeQueue(&consulEvent); err != nil || !found {
 		return err
-	}
-	if !found {
-		return nil
 	}
 	log.Infof("Dispatch event(ID: %s, Name: %s)", consulEvent.ID, consulEvent.Name)
 
@@ -235,8 +226,7 @@ func (s *Scheduler) finishTask(task EventTask) error {
 
 	//	Dequeue task from task queue when finished task over all all nodes
 	var dummy EventTask
-	err, found := pq.DeQueue(&dummy)
-	if err != nil || !found {
+	if err, found := pq.DeQueue(&dummy); err != nil || !found {
 		return err
 	}
 

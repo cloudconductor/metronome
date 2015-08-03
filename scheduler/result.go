@@ -156,8 +156,7 @@ func getResult(key string, result interface{}) (bool, error) {
 		return false, nil
 	}
 
-	err = json.Unmarshal(kv.Value, &result)
-	if err != nil {
+	if err := json.Unmarshal(kv.Value, &result); err != nil {
 		return false, err
 	}
 	return true, nil

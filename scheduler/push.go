@@ -16,8 +16,7 @@ func Push() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	_, err = l.Lock(nil)
-	if err != nil {
+	if _, err := l.Lock(nil); err != nil {
 		return "", err
 	}
 	defer l.Unlock()
@@ -29,8 +28,7 @@ func Push() (string, error) {
 	err = json.Unmarshal(bytes, &receiveEvents)
 
 	for _, re := range receiveEvents {
-		err = pushSingleEvent(eq, re)
-		if err != nil {
+		if err := pushSingleEvent(eq, re); err != nil {
 			return "", err
 		}
 	}
@@ -39,8 +37,7 @@ func Push() (string, error) {
 
 func pushSingleEvent(eq *queue.Queue, re api.UserEvent) error {
 	var storedEvents []api.UserEvent
-	err := eq.Items(&storedEvents)
-	if err != nil {
+	if err := eq.Items(&storedEvents); err != nil {
 		return err
 	}
 
@@ -51,8 +48,7 @@ func pushSingleEvent(eq *queue.Queue, re api.UserEvent) error {
 		}
 	}
 
-	err = eq.EnQueue(re)
-	if err != nil {
+	if err := eq.EnQueue(re); err != nil {
 		return err
 	}
 

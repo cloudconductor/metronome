@@ -68,8 +68,7 @@ func (t *Task) Run(vars map[string]string) error {
 	log.Infof("Task %s has started", t.Name)
 	for _, o := range t.Operations {
 		log.Infof("Operation %s has started", o.String())
-		err := o.Run(vars)
-		if err != nil {
+		if err := o.Run(vars); err != nil {
 			log.Errorf("Task %s has failed", t.Name)
 			return err
 		}
