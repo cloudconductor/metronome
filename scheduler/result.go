@@ -38,7 +38,7 @@ type NodeTaskResult struct {
 	No         int
 	Node       string
 	Status     string
-	Log        string
+	Log        string `json:"-"`
 	StartedAt  time.Time
 	FinishedAt time.Time
 }
