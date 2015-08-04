@@ -256,7 +256,7 @@ func (s *Scheduler) finishTask(task EventTask) error {
 
 	//	Dequeue task from task queue when finished task over all all nodes
 	var dummy EventTask
-	if err, found := pq.DeQueue(&dummy); err != nil || !found {
+	if err, _ := pq.DeQueue(&dummy); err != nil {
 		return err
 	}
 
