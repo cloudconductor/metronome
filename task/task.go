@@ -2,8 +2,10 @@ package task
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"scheduler/operation"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -68,16 +70,43 @@ func (t *Task) SetPattern(pattern string) {
 
 func (t *Task) Run(vars map[string]string) error {
 	log.Infof("-- Task %s has started", t.Name)
+	ch := make(chan error)
+	timeout := make(chan bool)
+
+	go t.runWithTimeout(vars, ch, timeout)
+
+	select {
+	case err := <-ch:
+		if err != nil {
+			log.Errorf("-- Task %s has failed", t.Name)
+			return err
+		}
+	case <-time.After(time.Duration(t.Timeout) * time.Second):
+		log.Errorf("-- Task %s has expired", t.Name)
+		close(timeout)
+		return errors.New("Timeout expired while executing task")
+	}
+	log.Infof("-- Task %s has finished successfully", t.Name)
+	return nil
+}
+
+func (t *Task) runWithTimeout(vars map[string]string, ch chan error, timeout <-chan bool) {
 	for _, o := range t.Operations {
 		log.Infof("---- Operation %s has started", o.String())
 		if err := o.Run(vars); err != nil {
 			log.Errorf("---- Operation %s in %s has failed", o.String(), t.Name)
-			return err
+			ch <- err
+			return
 		}
-		log.Infof("---- Operation %s has finished successfully", o.String())
+
+		select {
+		case <-timeout:
+			return
+		default:
+			log.Infof("---- Operation %s has finished successfully", o.String())
+		}
 	}
-	log.Infof("-- Task %s has finished successfully", t.Name)
-	return nil
+	ch <- nil
 }
 
 func (t *Task) String() string {
