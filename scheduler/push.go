@@ -3,9 +3,9 @@ package scheduler
 import (
 	"encoding/json"
 	"io/ioutil"
+	"metronome/queue"
+	"metronome/util"
 	"os"
-	"scheduler/queue"
-	"scheduler/util"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/hashicorp/consul/api"

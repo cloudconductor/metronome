@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"metronome/config"
+	"metronome/util"
 	"os/exec"
-	"scheduler/config"
-	"scheduler/util"
 
 	log "github.com/Sirupsen/logrus"
 )

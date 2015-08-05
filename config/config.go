@@ -12,8 +12,8 @@ import (
 	"github.com/monochromegane/conflag"
 )
 
-const CONF_PATH string = "/etc/scheduler/config.yml"
-const VARIABLES_PATH string = "/etc/scheduler/variables.yml"
+const CONF_PATH string = "/etc/metronome/config.yml"
+const VARIABLES_PATH string = "/etc/metronome/variables.yml"
 
 var (
 	UserVariables stringMapValue

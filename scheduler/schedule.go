@@ -2,7 +2,7 @@ package scheduler
 
 import (
 	"fmt"
-	"scheduler/task"
+	"metronome/task"
 	"strings"
 )
 

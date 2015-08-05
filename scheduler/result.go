@@ -2,7 +2,7 @@ package scheduler
 
 import (
 	"encoding/json"
-	"scheduler/util"
+	"metronome/util"
 	"strconv"
 	"strings"
 	"time"
@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/consul/api"
 )
 
-const EVENT_RESULT_KEY = "scheduler/results"
+const EVENT_RESULT_KEY = "metronome/results"
 
 type Result interface {
 	Key() string
@@ -138,7 +138,7 @@ func getNodeTaskResult(id string, no int, node string) (*NodeTaskResult, error) 
 		return nil, err
 	}
 
-	//	Read log from /scheduler/result/[EventID]/[No]/[Node]/log
+	//	Read log from /metronome/result/[EventID]/[No]/[Node]/log
 	kv, _, err := util.Consul().KV().Get(key+"/log", &api.QueryOptions{})
 	if err != nil {
 		return nil, err

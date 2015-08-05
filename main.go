@@ -1,9 +1,9 @@
 package main
 
 import (
+	"metronome/config"
+	"metronome/util"
 	"os"
-	"scheduler/config"
-	"scheduler/util"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -16,7 +16,7 @@ func main() {
 		log.SetLevel(log.InfoLevel)
 	}
 
-	service, err := NewService("scheduler", "Scheduler for consul event")
+	service, err := NewService("metronome", "Scheduling tool on consul")
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)

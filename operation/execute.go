@@ -2,9 +2,9 @@ package operation
 
 import (
 	"encoding/json"
+	"metronome/util"
 	"os"
 	"os/exec"
-	"scheduler/util"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"

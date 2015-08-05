@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"scheduler/util"
+	"metronome/util"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/hashicorp/consul/api"

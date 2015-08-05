@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"metronome/scheduler"
 	"os"
 	"os/signal"
-	"scheduler/scheduler"
 	"syscall"
 
 	"github.com/takama/daemon"
@@ -25,7 +25,7 @@ func NewService(name, description string) (*Service, error) {
 }
 
 func (service *Service) Manage() (string, error) {
-	usage := "Usage: scheduler install | remove | start | stop | status | agent"
+	usage := "Usage: metronome install | remove | start | stop | status | agent"
 
 	if flag.NArg() > 0 {
 		switch flag.Args()[0] {

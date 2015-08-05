@@ -3,8 +3,8 @@ package util
 import (
 	"crypto/tls"
 	"fmt"
+	"metronome/config"
 	"net/http"
-	"scheduler/config"
 
 	"github.com/hashicorp/consul/api"
 )

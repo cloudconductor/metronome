@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"metronome/config"
+	"metronome/queue"
+	"metronome/util"
 	"os"
-	"scheduler/config"
-	"scheduler/queue"
-	"scheduler/util"
 	"strings"
 	"time"
 

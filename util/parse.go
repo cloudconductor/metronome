@@ -1,8 +1,8 @@
 package util
 
 import (
+	"metronome/config"
 	"regexp"
-	"scheduler/config"
 
 	"github.com/imdario/mergo"
 )

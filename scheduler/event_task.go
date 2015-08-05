@@ -3,7 +3,7 @@ package scheduler
 import (
 	"errors"
 	"fmt"
-	"scheduler/util"
+	"metronome/util"
 	"time"
 
 	"github.com/hashicorp/consul/api"

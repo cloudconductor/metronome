@@ -4,18 +4,18 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"metronome/config"
+	"metronome/util"
 	"path/filepath"
-	"scheduler/config"
-	"scheduler/util"
 	"sort"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/ghodss/yaml"
 )
 
-const EVENT_QUEUE_KEY = "scheduler/event_queue"
-const PROGRESS_QUEUE_KEY = "scheduler/progress_task_queue"
-const LOCK_KEY = "scheduler/event_queue/lock"
+const EVENT_QUEUE_KEY = "metronome/event_queue"
+const PROGRESS_QUEUE_KEY = "metronome/progress_task_queue"
+const LOCK_KEY = "metronome/event_queue/lock"
 
 type Scheduler struct {
 	schedules map[string]Schedule
