@@ -24,9 +24,6 @@ func init() {
 		"execute": func(v json.RawMessage) (Operation, error) {
 			return NewExecuteOperation(v), nil
 		},
-		"task": func(v json.RawMessage) (Operation, error) {
-			return NewTaskOperation(v), nil
-		},
 		"consul-kvs": func(v json.RawMessage) (Operation, error) {
 			return NewConsulKVSOperation(v), nil
 		},
