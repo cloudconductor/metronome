@@ -3,6 +3,7 @@ package scheduler
 import "fmt"
 
 type Event struct {
+	Path         string
 	Pattern      string
 	Name         string
 	Description  string
@@ -13,7 +14,8 @@ type Event struct {
 
 type Events []Event
 
-func (e *Event) SetPattern(pattern string) {
+func (e *Event) SetPattern(path string, pattern string) {
+	e.Path = path
 	e.Pattern = pattern
 }
 

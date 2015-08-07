@@ -61,7 +61,7 @@ func (scheduler *Scheduler) load() error {
 			return errors.New(fmt.Sprintf("Failed to unmarshal json(%s)\n\t%s", path, err))
 		}
 
-		schedule.PostUnmarshal(e.Name())
+		schedule.PostUnmarshal(path, e.Name())
 		scheduler.schedules[e.Name()] = schedule
 		log.Debug(&schedule)
 	}

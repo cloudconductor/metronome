@@ -11,6 +11,7 @@ import (
 )
 
 type Task struct {
+	Path        string
 	Pattern     string
 	Name        string
 	Trigger     string
@@ -61,10 +62,11 @@ func (t *Task) UnmarshalJSON(d []byte) error {
 	return u.err
 }
 
-func (t *Task) SetPattern(pattern string) {
+func (t *Task) SetPattern(path string, pattern string) {
+	t.Path = path
 	t.Pattern = pattern
 	for _, o := range t.Operations {
-		o.SetPattern(pattern)
+		o.SetPattern(path, pattern)
 	}
 }
 

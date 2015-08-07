@@ -9,6 +9,7 @@ import (
 const INDENT_WIDTH = 2
 
 type Schedule struct {
+	path      string
 	pattern   string
 	Variables map[string]string
 	Default   TaskDefault
@@ -20,11 +21,12 @@ type TaskDefault struct {
 	Timeout int32
 }
 
-func (s *Schedule) PostUnmarshal(pattern string) {
+func (s *Schedule) PostUnmarshal(path string, pattern string) {
+	s.path = path
 	s.pattern = pattern
 	for k, e := range s.Events {
 		e.Name = k
-		e.SetPattern(pattern)
+		e.SetPattern(path, pattern)
 	}
 	for k, t := range s.Tasks {
 		t.Name = k
@@ -32,7 +34,7 @@ func (s *Schedule) PostUnmarshal(pattern string) {
 			t.Timeout = s.Default.Timeout
 		}
 
-		t.SetPattern(pattern)
+		t.SetPattern(path, pattern)
 	}
 }
 
