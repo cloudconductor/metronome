@@ -56,6 +56,7 @@ func (scheduler *Scheduler) load() error {
 			return errors.New(fmt.Sprintf("Failed to load config file(%s)\n\t%s", path, err))
 		}
 		var schedule Schedule
+		schedule.Default = taskDefault()
 		if err := yaml.Unmarshal([]byte(d), &schedule); err != nil {
 			return errors.New(fmt.Sprintf("Failed to unmarshal json(%s)\n\t%s", path, err))
 		}
@@ -78,4 +79,10 @@ func (scheduler *Scheduler) sortedEvents(name string) Events {
 	}
 	sort.Sort(events)
 	return events
+}
+
+func taskDefault() TaskDefault {
+	return TaskDefault{
+		Timeout: 1800,
+	}
 }
