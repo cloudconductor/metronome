@@ -272,8 +272,12 @@ func (o *ChefOperation) defaultConfig() (map[string]interface{}, error) {
 }
 
 func (o *ChefOperation) executeBerkshelf() error {
-	log.Info("chef: Execute berkshelf")
+	if !util.Exists(filepath.Join(o.patternDir(), "Berksfile")) {
+		log.Debug("chef: Skip berkshelf because Berksfile doesn't found in pattern directory")
+		return nil
+	}
 
+	log.Info("chef: Execute berkshelf")
 	cmd := exec.Command("berks", "vendor", "cookbooks")
 	cmd.Dir = o.patternDir()
 	env := os.Environ()
