@@ -316,7 +316,7 @@ func (o *ChefOperation) executeChef(conf string, json string) error {
 }
 
 func (o *ChefOperation) patternDir() string {
-	return filepath.Join(config.BaseDir, "patterns", o.pattern)
+	return filepath.Dir(o.path)
 }
 
 func (o *ChefOperation) String() string {
