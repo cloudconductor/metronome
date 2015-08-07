@@ -58,6 +58,8 @@ tasks:
   setup:
     description: Execute setup chef
     operations:
+      - execute:
+          file: prepare.sh
       - chef:
           run_list:
             - role[{{role}}_setup]
@@ -88,10 +90,11 @@ tasks:
     service: postgresql
     tag: master
     operations:
-      - execute: |
-          rm -rf {{backup_directory}}/*
-          sudo -u postgres pg_basebackup -D {{backup_directory}} --xlog --verbose -h 127.0.0.1 -U replication
-          chown -R amandabackup:disk {{backup_directory}}
+      - execute:
+          script: |
+            rm -rf {{backup_directory}}/*
+            sudo -u postgres pg_basebackup -D {{backup_directory}} --xlog --verbose -h 127.0.0.1 -U replication
+            chown -R amandabackup:disk {{backup_directory}}
 
   restore_database:
     description: Restore database on primary
@@ -105,11 +108,12 @@ tasks:
       - service:
           name: postgresql-9.4
           action: stop
-      - execute: |
-          rm -rf /var/lib/pgsql/9.4/data/*
-          mv {{backup_directory}}/* /var/lib/pgsql/9.4/data
-          chown -R postgres:postgres /var/lib/pgsql/9.4/data
-          chmod 700 /var/lib/pgsql/9.4/data
+      - execute:
+          script: |
+            rm -rf /var/lib/pgsql/9.4/data/*
+            mv {{backup_directory}}/* /var/lib/pgsql/9.4/data
+            chown -R postgres:postgres /var/lib/pgsql/9.4/data
+            chmod 700 /var/lib/pgsql/9.4/data
       - service:
           name: postgresql-9.4
           action: start
@@ -125,18 +129,19 @@ tasks:
       - service:
           name: postgresql-9.4
           action: stop
-      - execute: |
-          json=`curl http://localhost:8500/v1/catalog/service/postgresql?tag=primary`
-          primary_ip=`echo $json | jq '.[] | .Address' | sed -e 's/[^"]*"\([^"]*\)".*/\1/'`
+      - execute:
+          script: |
+            json=`curl http://localhost:8500/v1/catalog/service/postgresql?tag=primary`
+            primary_ip=`echo $json | jq '.[] | .Address' | sed -e 's/[^"]*"\([^"]*\)".*/\1/'`
 
-          rm -rf {{backup_directory}}/*
-          sudo -u postgres pg_basebackup -D {{backup_directory}} --xlog --verbose -h $primary_ip -U replication
-          rm -rf /var/lib/pgsql/9.4/data/*
-          mv {{backup_directory}}/* /var/lib/pgsql/9.4/data
-          chown -R postgres:postgres /var/lib/pgsql/9.4/data
-          chmod 700 /var/lib/pgsql/9.4/data
-          mv /var/lib/pgsql/9.4/data/recovery.done /var/lib/pgsql/9.4/data/recovery.conf
-          sed -ri "s/host=[^ ]+ /host=$primary_ip /" /var/lib/pgsql/9.4/data/recovery.conf
+            rm -rf {{backup_directory}}/*
+            sudo -u postgres pg_basebackup -D {{backup_directory}} --xlog --verbose -h $primary_ip -U replication
+            rm -rf /var/lib/pgsql/9.4/data/*
+            mv {{backup_directory}}/* /var/lib/pgsql/9.4/data
+            chown -R postgres:postgres /var/lib/pgsql/9.4/data
+            chmod 700 /var/lib/pgsql/9.4/data
+            mv /var/lib/pgsql/9.4/data/recovery.done /var/lib/pgsql/9.4/data/recovery.conf
+            sed -ri "s/host=[^ ]+ /host=$primary_ip /" /var/lib/pgsql/9.4/data/recovery.conf
       - service:
           name: postgresql-9.4
           action: start
