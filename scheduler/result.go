@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"encoding/json"
+	"fmt"
 	"metronome/util"
 	"strconv"
 	"strings"
@@ -41,6 +42,50 @@ type NodeTaskResult struct {
 	Log        string `json:"-"`
 	StartedAt  time.Time
 	FinishedAt time.Time
+}
+
+func (r *EventResult) MarshalJSON() ([]byte, error) {
+	var columns []string
+	columns = append(columns, fmt.Sprintf("\"ID\": \"%s\"", r.ID))
+	columns = append(columns, fmt.Sprintf("\"Name\": \"%s\"", r.Name))
+	columns = append(columns, fmt.Sprintf("\"Status\": \"%s\"", r.Status))
+	if !r.StartedAt.IsZero() {
+		columns = append(columns, fmt.Sprintf("\"StartedAt\": \"%s\"", r.StartedAt.Format(time.RFC3339)))
+	}
+	if !r.FinishedAt.IsZero() {
+		columns = append(columns, fmt.Sprintf("\"FinishedAt\": \"%s\"", r.FinishedAt.Format(time.RFC3339)))
+	}
+	return []byte(fmt.Sprintf("{ %s }", strings.Join(columns, ","))), nil
+}
+
+func (r *TaskResult) MarshalJSON() ([]byte, error) {
+	var columns []string
+	columns = append(columns, fmt.Sprintf("\"EventID\": \"%s\"", r.EventID))
+	columns = append(columns, fmt.Sprintf("\"No\": %d", r.No))
+	columns = append(columns, fmt.Sprintf("\"Name\": \"%s\"", r.Name))
+	columns = append(columns, fmt.Sprintf("\"Status\": \"%s\"", r.Status))
+	if !r.StartedAt.IsZero() {
+		columns = append(columns, fmt.Sprintf("\"StartedAt\": \"%s\"", r.StartedAt.Format(time.RFC3339)))
+	}
+	if !r.FinishedAt.IsZero() {
+		columns = append(columns, fmt.Sprintf("\"FinishedAt\": \"%s\"", r.FinishedAt.Format(time.RFC3339)))
+	}
+	return []byte(fmt.Sprintf("{ %s }", strings.Join(columns, ","))), nil
+}
+
+func (r *NodeTaskResult) MarshalJSON() ([]byte, error) {
+	var columns []string
+	columns = append(columns, fmt.Sprintf("\"EventID\": \"%s\"", r.EventID))
+	columns = append(columns, fmt.Sprintf("\"No\": %d", r.No))
+	columns = append(columns, fmt.Sprintf("\"Node\": \"%s\"", r.Node))
+	columns = append(columns, fmt.Sprintf("\"Status\": \"%s\"", r.Status))
+	if !r.StartedAt.IsZero() {
+		columns = append(columns, fmt.Sprintf("\"StartedAt\": \"%s\"", r.StartedAt.Format(time.RFC3339)))
+	}
+	if !r.FinishedAt.IsZero() {
+		columns = append(columns, fmt.Sprintf("\"FinishedAt\": \"%s\"", r.FinishedAt.Format(time.RFC3339)))
+	}
+	return []byte(fmt.Sprintf("{ %s }", strings.Join(columns, ","))), nil
 }
 
 func (r *EventResult) Key() string {
