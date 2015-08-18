@@ -29,6 +29,7 @@ var (
 	Path      string
 
 	ServiceManager string
+	Shell          string
 
 	BaseDir string
 
@@ -51,6 +52,7 @@ func init() {
 	flag.IntVar(&ProxyPort, "proxy-port", 8080, "Port number of proxy server")
 	flag.StringVar(&Path, "path", "", "Add PATH on environment variables")
 
+	flag.StringVar(&Shell, "shell", "/bin/sh", "Shell path(default: /bin/sh)")
 	flag.StringVar(&ServiceManager, "service-manager", "init", "Service manager(systemd / init)")
 
 	flag.StringVar(&BaseDir, "base-dir", "/opt/cloudconductor", "CloudConductor base dir(default: /opt/cloudconductor))")

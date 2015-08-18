@@ -2,6 +2,7 @@ package operation
 
 import (
 	"encoding/json"
+	"metronome/config"
 	"metronome/util"
 	"os"
 	"os/exec"
@@ -24,7 +25,7 @@ func NewExecuteOperation(v json.RawMessage) *ExecuteOperation {
 }
 
 func (o *ExecuteOperation) Run(vars map[string]string) error {
-	cmd := exec.Command(os.Getenv("SHELL"))
+	cmd := exec.Command(config.Shell)
 	cmd.Dir = filepath.Dir(o.path)
 	if o.File != "" {
 		file := util.ParseString(o.File, vars)
