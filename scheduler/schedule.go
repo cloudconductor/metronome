@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"fmt"
+	"metronome/config"
 	"metronome/task"
 	"strings"
 )
@@ -36,6 +37,11 @@ func (s *Schedule) PostUnmarshal(path string, pattern string) {
 
 		t.SetPattern(path, pattern)
 	}
+
+	if s.Variables == nil {
+		s.Variables = make(map[string]string)
+	}
+	s.Variables["role"] = config.Role
 }
 
 func (s *Schedule) String() string {
