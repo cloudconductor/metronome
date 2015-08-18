@@ -309,6 +309,8 @@ func (o *ChefOperation) executeChef(conf string, json string) error {
 	cmd.Dir = o.patternDir()
 	env := os.Environ()
 	env = append(env, "HOME=/root")
+	env = append(env, "CONSUL_SECRET_KEY="+config.Token)
+	env = append(env, "ROLE="+config.Role)
 	cmd.Env = env
 	out, err := cmd.CombinedOutput()
 	log.Debug(string(out))
