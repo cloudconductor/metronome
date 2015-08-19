@@ -32,7 +32,7 @@ var (
 	ServiceManager string
 	Shell          string
 
-	BaseDir string
+	Files []string
 
 	Role string
 
@@ -40,6 +40,8 @@ var (
 )
 
 func init() {
+	var files string
+
 	UserVariables = loadUserVariables(VARIABLES_PATH)
 	flag.Var(&UserVariables, "var", "Specify user variables(ex. \"-var key1=value1 -var key2=value2\")")
 
@@ -57,7 +59,7 @@ func init() {
 	flag.StringVar(&Shell, "shell", "/bin/sh", "Shell path(default: /bin/sh)")
 	flag.StringVar(&ServiceManager, "service-manager", "init", "Service manager(systemd / init)")
 
-	flag.StringVar(&BaseDir, "base-dir", "/opt/cloudconductor", "CloudConductor base dir(default: /opt/cloudconductor))")
+	flag.StringVar(&files, "files", "", "Path list of task.yml")
 
 	flag.StringVar(&Role, "role", "", "Role names of self instance(ex. \"-role web, ap\")")
 
@@ -68,6 +70,8 @@ func init() {
 	}
 
 	flag.Parse()
+
+	Files = strings.Split(files, ",")
 
 	setEnvironmentVariables()
 }

@@ -35,21 +35,15 @@ func NewScheduler() (*Scheduler, error) {
 }
 
 func (scheduler *Scheduler) load() error {
-	entries, err := ioutil.ReadDir(filepath.Join(config.BaseDir, "patterns"))
-	if err != nil {
-		return err
-	}
-
-	for _, e := range entries {
-		if !e.IsDir() {
+	for _, path := range config.Files {
+		if path == "" {
 			continue
 		}
-
-		path := filepath.Join(config.BaseDir, "patterns", e.Name(), "task.yml")
 		if !util.Exists(path) {
 			log.Warnf("Schedule file does not found(%s)", path)
 			continue
 		}
+		log.Info(fmt.Sprintf("Load %s", path))
 
 		d, err := ioutil.ReadFile(path)
 		if err != nil {
@@ -61,8 +55,9 @@ func (scheduler *Scheduler) load() error {
 			return errors.New(fmt.Sprintf("Failed to unmarshal json(%s)\n\t%s", path, err))
 		}
 
-		schedule.PostUnmarshal(path, e.Name())
-		scheduler.schedules[e.Name()] = schedule
+		patternName := patternName(path)
+		schedule.PostUnmarshal(path, patternName)
+		scheduler.schedules[patternName] = schedule
 		log.Debug(&schedule)
 	}
 	return nil
@@ -85,4 +80,8 @@ func taskDefault() TaskDefault {
 	return TaskDefault{
 		Timeout: 1800,
 	}
+}
+
+func patternName(path string) string {
+	return filepath.Base(filepath.Dir(path))
 }
