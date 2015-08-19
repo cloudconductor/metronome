@@ -27,7 +27,6 @@ var (
 	ProxyHost string
 	ProxyPort int
 	NoProxy   string
-	Path      string
 
 	ServiceManager string
 	Shell          string
@@ -54,7 +53,6 @@ func init() {
 	flag.StringVar(&ProxyHost, "proxy-host", "", "Hostname or IP Address of proxy server")
 	flag.IntVar(&ProxyPort, "proxy-port", 8080, "Port number of proxy server")
 	flag.StringVar(&NoProxy, "no-proxy", "", "Hostname list without proxy server")
-	flag.StringVar(&Path, "path", "", "Add PATH on environment variables")
 
 	flag.StringVar(&Shell, "shell", "/bin/sh", "Shell path(default: /bin/sh)")
 	flag.StringVar(&ServiceManager, "service-manager", "init", "Service manager(systemd / init)")
@@ -115,10 +113,6 @@ func setEnvironmentVariables() {
 
 	if NoProxy != "" {
 		os.Setenv("no_proxy", NoProxy)
-	}
-
-	if Path != "" {
-		os.Setenv("PATH", Path+":"+os.Getenv("PATH"))
 	}
 
 	if Role != "" {
