@@ -28,8 +28,8 @@ func (o *ExecuteOperation) Run(vars map[string]string) error {
 	cmd := exec.Command(config.Shell)
 	cmd.Dir = filepath.Dir(o.path)
 	if o.File != "" {
-		file := util.ParseString(o.File, vars)
-		cmd.Args = append(cmd.Args, file)
+		s := util.ParseString(o.File, vars)
+		cmd.Stdin = strings.NewReader(s)
 	} else {
 		s := util.ParseString(o.Script, vars)
 		cmd.Stdin = strings.NewReader(s)
