@@ -23,7 +23,7 @@ func Parse(src interface{}, vars map[string]string) interface{} {
 func ParseString(src string, vars map[string]string) string {
 	mergo.Merge(&vars, map[string]string(config.UserVariables))
 
-	r, _ := regexp.Compile("{{([^{}]+)}}")
+	r := regexp.MustCompile("{{([^{}]+)}}")
 	for prev := ""; prev != src; {
 		prev = src
 		src = r.ReplaceAllStringFunc(src, func(s string) string {
