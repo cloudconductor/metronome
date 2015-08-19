@@ -26,6 +26,7 @@ var (
 
 	ProxyHost string
 	ProxyPort int
+	NoProxy   string
 	Path      string
 
 	ServiceManager string
@@ -50,6 +51,7 @@ func init() {
 
 	flag.StringVar(&ProxyHost, "proxy-host", "", "Hostname or IP Address of proxy server")
 	flag.IntVar(&ProxyPort, "proxy-port", 8080, "Port number of proxy server")
+	flag.StringVar(&NoProxy, "no-proxy", "", "Hostname list without proxy server")
 	flag.StringVar(&Path, "path", "", "Add PATH on environment variables")
 
 	flag.StringVar(&Shell, "shell", "/bin/sh", "Shell path(default: /bin/sh)")
@@ -105,6 +107,10 @@ func setEnvironmentVariables() {
 		os.Setenv("http_proxy", proxy)
 		os.Setenv("https_proxy", proxy)
 		os.Setenv("ftp_proxy", proxy)
+	}
+
+	if NoProxy != "" {
+		os.Setenv("no_proxy", NoProxy)
 	}
 
 	if Path != "" {
