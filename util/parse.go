@@ -27,12 +27,18 @@ func ParseString(src string, vars map[string]string) string {
 	for prev := ""; prev != src; {
 		prev = src
 		src = r.ReplaceAllStringFunc(src, func(s string) string {
-			k := s[2 : len(s)-2]
-			v, ok := vars[k]
-			if !ok {
-				return s
+			r2 := regexp.MustCompile(`{{config\.([^{}]+)}}`)
+			matches := r2.FindStringSubmatch(s)
+			if len(matches) == 2 {
+				return config.GetValue(matches[1])
+			} else {
+				k := s[2 : len(s)-2]
+				v, ok := vars[k]
+				if !ok {
+					return s
+				}
+				return v
 			}
-			return v
 		})
 	}
 

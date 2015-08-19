@@ -125,3 +125,11 @@ func setEnvironmentVariables() {
 		os.Setenv("ROLE", Role)
 	}
 }
+
+func GetValue(name string) string {
+	switch name {
+	case "token":
+		return Token
+	}
+	return ""
+}
