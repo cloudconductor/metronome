@@ -4,18 +4,24 @@ import (
 	"fmt"
 	"metronome/config"
 	"metronome/task"
+	"metronome/util"
+	"os"
+	"regexp"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 const INDENT_WIDTH = 2
 
 type Schedule struct {
-	path      string
-	pattern   string
-	Variables map[string]string
-	Default   TaskDefault
-	Events    map[string]*Event
-	Tasks     map[string]*task.Task
+	path         string
+	pattern      string
+	Environments map[string]string
+	Variables    map[string]string
+	Default      TaskDefault
+	Events       map[string]*Event
+	Tasks        map[string]*task.Task
 }
 
 type TaskDefault struct {
@@ -42,6 +48,8 @@ func (s *Schedule) PostUnmarshal(path string, pattern string) {
 		s.Variables = make(map[string]string)
 	}
 	s.Variables["role"] = config.Role
+
+	s.setEnvironmentVariables()
 }
 
 func (s *Schedule) String() string {
@@ -84,4 +92,16 @@ func indent(s string, n int) string {
 	}
 
 	return strings.Join(results, "\n")
+}
+
+func (s *Schedule) setEnvironmentVariables() {
+	r := regexp.MustCompile(`\$[a-zA-Z0-9_-]+`)
+	for k, v := range s.Environments {
+		v = r.ReplaceAllStringFunc(v, func(s string) string {
+			return os.Getenv(s[1:len(s)])
+		})
+		v = util.ParseString(v, s.Variables)
+		os.Setenv(k, v)
+		log.Info(fmt.Sprintf("Set environment(%s): %s", k, v))
+	}
 }
