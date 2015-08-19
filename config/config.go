@@ -124,6 +124,28 @@ func GetValue(name string) string {
 	switch name {
 	case "token":
 		return Token
+	case "host":
+		return Hostname
+	case "port":
+		return strconv.Itoa(Port)
+	case "protocol":
+		return Protocol
+	case "insecure-skip-verify":
+		return strconv.FormatBool(InsecureSkipVerify)
+	case "proxy-host":
+		return ProxyHost
+	case "proxy-port":
+		return strconv.Itoa(ProxyPort)
+	case "no-proxy":
+		return NoProxy
+	case "shell":
+		return Shell
+	case "service-manager":
+		return ServiceManager
+	case "role":
+		return Role
+	case "debug":
+		return strconv.FormatBool(Debug)
 	}
 	return ""
 }
