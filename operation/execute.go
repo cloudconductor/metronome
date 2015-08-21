@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"metronome/config"
 	"metronome/util"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -14,9 +13,10 @@ import (
 
 type ExecuteOperation struct {
 	BaseOperation
-	File   string
-	Script string
-	Output bool
+	File      string
+	Arguments []string
+	Script    string
+	Output    bool
 }
 
 func NewExecuteOperation(v json.RawMessage) *ExecuteOperation {
@@ -27,12 +27,14 @@ func NewExecuteOperation(v json.RawMessage) *ExecuteOperation {
 }
 
 func (o *ExecuteOperation) Run(vars map[string]string) error {
-	cmd := exec.Command(config.Shell)
+	cmd := &exec.Cmd{}
 	cmd.Dir = filepath.Dir(o.path)
 	if o.File != "" {
 		file := util.ParseString(o.File, vars)
-		cmd.Args = append(cmd.Args, file)
+		cmd.Path = file
+		cmd.Args = append([]string{file}, o.Arguments...)
 	} else {
+		cmd.Path = config.Shell
 		s := util.ParseString(o.Script, vars)
 		cmd.Stdin = strings.NewReader(s)
 	}
