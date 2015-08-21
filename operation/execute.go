@@ -16,10 +16,12 @@ type ExecuteOperation struct {
 	BaseOperation
 	File   string
 	Script string
+	Output bool
 }
 
 func NewExecuteOperation(v json.RawMessage) *ExecuteOperation {
 	o := &ExecuteOperation{}
+	o.Output = true
 	json.Unmarshal(v, &o)
 	return o
 }
@@ -35,7 +37,10 @@ func (o *ExecuteOperation) Run(vars map[string]string) error {
 		cmd.Stdin = strings.NewReader(s)
 	}
 	out, err := cmd.CombinedOutput()
-	log.Debug(string(out))
+
+	if o.Output {
+		log.Info(string(out))
+	}
 	return err
 }
 
