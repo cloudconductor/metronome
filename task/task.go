@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"metronome/operation"
+	"metronome/util"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -26,40 +27,21 @@ type Filter struct {
 	Tag     string
 }
 
-type unmarshalContext struct {
-	err error
-}
-
-func (u *unmarshalContext) unmarshal(data []byte, v interface{}) error {
-	if u.err != nil || len(data) == 0 {
-		return u.err
-	}
-	u.err = json.Unmarshal(data, v)
-	return u.err
-}
-
-func (u *unmarshalContext) unmarshalOperations(data []byte, v *[]operation.Operation) error {
-	if u.err != nil {
-		return u.err
-	}
-	u.err = operation.UnmarshalOperations(data, v)
-	return u.err
-}
-
 func (t *Task) UnmarshalJSON(d []byte) error {
 	m := make(map[string]json.RawMessage)
-	u := &unmarshalContext{}
-	u.unmarshal(d, &m)
-	u.unmarshal([]byte(m["name"]), &t.Name)
-	u.unmarshal([]byte(m["trigger"]), &t.Trigger)
-	u.unmarshal([]byte(m["description"]), &t.Description)
-	u.unmarshal([]byte(m["timeout"]), &t.Timeout)
-	if _, ok := m["filter"]; ok {
-		u.unmarshal([]byte(m["filter"]), &t.Filter)
-	}
-	u.unmarshalOperations([]byte(m["operations"]), &t.Operations)
+	u := &util.UnmarshalContext{}
+	u.Unmarshal(d, &m)
+	u.Unmarshal([]byte(m["name"]), &t.Name)
+	u.Unmarshal([]byte(m["trigger"]), &t.Trigger)
+	u.Unmarshal([]byte(m["description"]), &t.Description)
+	u.Unmarshal([]byte(m["timeout"]), &t.Timeout)
+	u.Unmarshal([]byte(m["filter"]), &t.Filter)
 
-	return u.err
+	if u.Err != nil {
+		return u.Err
+	}
+
+	return operation.UnmarshalOperations([]byte(m["operations"]), &t.Operations)
 }
 
 func (t *Task) SetPattern(path string, pattern string) {
