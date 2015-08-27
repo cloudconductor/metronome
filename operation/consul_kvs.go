@@ -15,6 +15,7 @@ type ConsulKVSOperation struct {
 	Action string
 	Key    string
 	Value  string
+	Name   string
 }
 
 func NewConsulKVSOperation(v json.RawMessage) *ConsulKVSOperation {
@@ -25,6 +26,8 @@ func NewConsulKVSOperation(v json.RawMessage) *ConsulKVSOperation {
 
 func (o *ConsulKVSOperation) Run(vars map[string]string) error {
 	switch o.Action {
+	case "get":
+		return o.get(vars)
 	case "put":
 		return o.put(vars)
 	case "delete":
@@ -33,6 +36,17 @@ func (o *ConsulKVSOperation) Run(vars map[string]string) error {
 		return errors.New(fmt.Sprintf("Operation can't support %s action", o.Action))
 	}
 	return nil
+}
+
+func (o *ConsulKVSOperation) get(vars map[string]string) error {
+	kv := &api.KVPair{
+		Key:   o.Key,
+		Value: []byte(o.Value),
+	}
+	kv, _, err := util.Consul().KV().Get(o.Key, &api.QueryOptions{})
+	vars[o.Name] = string(kv.Value)
+	log.Infof("Get %s from %s and store to %s", kv.Value, kv.Key, o.Name)
+	return err
 }
 
 func (o *ConsulKVSOperation) put(vars map[string]string) error {
