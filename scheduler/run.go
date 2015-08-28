@@ -240,6 +240,9 @@ func (s *Scheduler) finishTask(task EventTask) error {
 
 	//	Collect task results over all nodes
 	status := "success"
+	if len(nodeResults) == 0 {
+		status = "skip"
+	}
 	for _, nr := range nodeResults {
 		if nr.Status == "error" {
 			status = "error"
