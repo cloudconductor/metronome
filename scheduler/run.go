@@ -172,10 +172,11 @@ func (s *Scheduler) dispatchEvent() error {
 		switch {
 		case v.Task != "":
 			pq.EnQueue(EventTask{
-				Pattern: v.Pattern,
-				ID:      consulEvent.ID,
-				No:      c,
-				Task:    v.Task,
+				Pattern:   v.Pattern,
+				ID:        consulEvent.ID,
+				No:        c,
+				Task:      v.Task,
+				Skippable: config.Skippable,
 			})
 			c += 1
 		case len(v.OrderedTasks) > 0:

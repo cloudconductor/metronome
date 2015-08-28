@@ -3,6 +3,7 @@ package scheduler
 import (
 	"encoding/json"
 	"fmt"
+	"metronome/config"
 	"metronome/util"
 )
 
@@ -44,8 +45,9 @@ func (e *Event) Run(scheduler *Scheduler) error {
 	if e.Task != "" {
 		tasks = []EventTask{
 			EventTask{
-				Pattern: e.Pattern,
-				Task:    e.Task,
+				Pattern:   e.Pattern,
+				Task:      e.Task,
+				Skippable: config.Skippable,
 			},
 		}
 	} else {

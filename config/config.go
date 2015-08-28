@@ -35,6 +35,8 @@ var (
 
 	Role string
 
+	Skippable bool
+
 	Debug bool
 )
 
@@ -60,6 +62,8 @@ func init() {
 	flag.StringVar(&files, "files", "", "Path list of task.yml")
 
 	flag.StringVar(&Role, "role", "", "Role names of self instance(ex. \"-role web, ap\")")
+
+	flag.BoolVar(&Skippable, "skippable", true, "Skip task which isn't needed by anyone")
 
 	flag.BoolVar(&Debug, "debug", false, "Debug mode enabled(default: false)")
 
@@ -144,6 +148,8 @@ func GetValue(name string) string {
 		return ServiceManager
 	case "role":
 		return Role
+	case "skippable":
+		return strconv.FormatBool(Skippable)
 	case "debug":
 		return strconv.FormatBool(Debug)
 	}
