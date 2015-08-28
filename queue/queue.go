@@ -119,6 +119,38 @@ func (q *Queue) deQueue(item interface{}) (error, bool) {
 	return nil, true
 }
 
+func (q *Queue) FetchHead(item interface{}) error {
+	var items []interface{}
+
+	entry, _, err := q.Client.KV().Get(q.Key, nil)
+	if err != nil {
+		return err
+	}
+	if entry == nil {
+		return nil
+	}
+
+	if len(entry.Value) > 0 {
+		if err := json.Unmarshal(entry.Value, &items); err != nil {
+			return err
+		}
+	}
+
+	if len(items) == 0 {
+		return nil
+	}
+
+	d, err := json.Marshal(items[0])
+	if err != nil {
+		return err
+	}
+
+	if err := json.Unmarshal(d, &item); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (q *Queue) Items(items interface{}) error {
 	entry, _, err := q.Client.KV().Get(q.Key, nil)
 	if err != nil {
