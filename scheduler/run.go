@@ -295,6 +295,12 @@ func (s *Scheduler) finishTask(task EventTask) error {
 			status = "error"
 			// remove following tasks in progress task queue when some error has been occurred
 			pq.Clear()
+			break
+		}
+		if nr.Status == "inprogress" {
+			status = "timeout"
+			// remove following tasks in progress task queue when timeout has been occurred
+			pq.Clear()
 		}
 	}
 
