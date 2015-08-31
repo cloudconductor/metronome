@@ -17,11 +17,15 @@ import (
 	"github.com/hashicorp/consul/api"
 )
 
+const TASK_TIMEOUT = 1800
+
 func (s *Scheduler) Run() {
 	if err := s.connect(); err != nil {
 		panic(err)
 	}
 
+	ch := make(chan bool)
+	go taskTimeout(ch)
 	for {
 		time.Sleep(1 * time.Second)
 
@@ -32,14 +36,14 @@ func (s *Scheduler) Run() {
 			scanner.Scan()
 		}
 
-		if err := s.polling(); err != nil {
+		if err := s.polling(ch); err != nil {
 			log.Error(err)
 			continue
 		}
 	}
 }
 
-func (s *Scheduler) polling() error {
+func (s *Scheduler) polling(ch chan bool) error {
 	//	Create critical section by consul lock
 	l, err := util.Consul().LockKey(LOCK_KEY)
 	if err != nil {
@@ -78,12 +82,55 @@ func (s *Scheduler) polling() error {
 		//	runTask is parallelizable
 		l.Unlock()
 		return s.runTask(eventTasks[0])
-	case eventTasks[0].IsFinished():
+	case eventTasks[0].IsFinished(ch):
 		return s.finishTask(eventTasks[0])
 	default:
 		log.Debugf("Wait a task will have been finished by other instance(Task: %s, Service: %s, Tag: %s)", eventTasks[0].Task, eventTasks[0].Service, eventTasks[0].Tag)
 	}
 	return nil
+}
+
+func taskTimeout(ch chan bool) {
+	for {
+		select {
+		case <-changeTask():
+		case <-time.After(time.Duration(TASK_TIMEOUT) * time.Second):
+			ch <- true
+		}
+	}
+}
+
+func changeTask() chan bool {
+	ch := make(chan bool)
+
+	go func(chan bool) {
+		pq := &queue.Queue{
+			Client: util.Consul(),
+			Key:    PROGRESS_QUEUE_KEY,
+		}
+
+		var prev EventTask
+		if err := pq.FetchHead(&prev); err != nil {
+			ch <- true
+			return
+		}
+
+		for {
+			time.Sleep(1 * time.Second)
+			var now EventTask
+			if err := pq.FetchHead(&now); err != nil {
+				ch <- true
+				return
+			}
+
+			if prev.ID != now.ID || prev.No != now.No {
+				ch <- true
+				return
+			}
+		}
+	}(ch)
+
+	return ch
 }
 
 func (scheduler *Scheduler) connect() error {

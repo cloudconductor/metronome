@@ -68,7 +68,14 @@ func (et *EventTask) Runnable(node string) bool {
 	return true
 }
 
-func (et *EventTask) IsFinished() bool {
+func (et *EventTask) IsFinished(ch chan bool) bool {
+	//	Finished task when timeout has occurred
+	select {
+	case <-ch:
+		return true
+	default:
+	}
+
 	nodes, _, err := util.Consul().Catalog().Nodes(&api.QueryOptions{})
 	if err != nil {
 		return false
