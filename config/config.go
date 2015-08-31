@@ -118,10 +118,6 @@ func setEnvironmentVariables() {
 	if NoProxy != "" {
 		os.Setenv("no_proxy", NoProxy)
 	}
-
-	if Role != "" {
-		os.Setenv("ROLE", Role)
-	}
 }
 
 func GetValue(name string) string {
