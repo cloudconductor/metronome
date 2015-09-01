@@ -53,7 +53,7 @@ func pushSingleEvent(eq *queue.Queue, re api.UserEvent) error {
 
 	for _, se := range storedEvents {
 		if se.ID == re.ID {
-			log.Infof("Receive event was already registerd in a queue(ID: %s)", re.ID)
+			log.Infof("Receive event was already registerd in a queue(ID: %s, Name: %s)", re.ID, re.Name)
 			return nil
 		}
 	}
