@@ -29,7 +29,6 @@ var (
 	NoProxy   string
 
 	ServiceManager string
-	Shell          string
 
 	Files []string
 
@@ -56,7 +55,6 @@ func init() {
 	flag.IntVar(&ProxyPort, "proxy-port", 8080, "Port number of proxy server")
 	flag.StringVar(&NoProxy, "no-proxy", "", "Hostname list without proxy server")
 
-	flag.StringVar(&Shell, "shell", "/bin/sh", "Shell path(default: /bin/sh)")
 	flag.StringVar(&ServiceManager, "service-manager", "init", "Service manager(systemd / init)")
 
 	flag.StringVar(&files, "files", "", "Path list of task.yml")
@@ -138,8 +136,6 @@ func GetValue(name string) string {
 		return strconv.Itoa(ProxyPort)
 	case "no-proxy":
 		return NoProxy
-	case "shell":
-		return Shell
 	case "service-manager":
 		return ServiceManager
 	case "role":

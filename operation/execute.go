@@ -2,7 +2,6 @@ package operation
 
 import (
 	"encoding/json"
-	"metronome/config"
 	"metronome/util"
 	"os/exec"
 	"path/filepath"
@@ -34,7 +33,7 @@ func (o *ExecuteOperation) Run(vars map[string]string) error {
 		cmd.Path = file
 		cmd.Args = append([]string{file}, o.Arguments...)
 	} else {
-		cmd.Path = config.Shell
+		cmd.Path = "/bin/sh"
 		s := util.ParseString(o.Script, vars)
 		cmd.Stdin = strings.NewReader(s)
 	}
