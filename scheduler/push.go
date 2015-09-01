@@ -3,6 +3,7 @@ package scheduler
 import (
 	"encoding/json"
 	"io/ioutil"
+	"metronome/config"
 	"metronome/queue"
 	"metronome/util"
 	"os"
@@ -39,6 +40,12 @@ func Push() (string, error) {
 }
 
 func pushSingleEvent(eq *queue.Queue, re api.UserEvent) error {
+	//	Check payload instead of ACL
+	if config.Token != "" && string(re.Payload) != config.Token {
+		log.Warnf("Payload doesn't match ACL token(ID: %s, Name: %s)", re.ID, re.Name)
+		return nil
+	}
+
 	var storedEvents []api.UserEvent
 	if err := eq.Items(&storedEvents); err != nil {
 		return err
