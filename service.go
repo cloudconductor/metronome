@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/takama/daemon"
 )
@@ -53,6 +54,7 @@ func (service *Service) Manage() (string, error) {
 }
 
 func agent() (string, error) {
+	time.Sleep(5 * time.Second)
 	scheduler, err := scheduler.NewScheduler()
 	if err != nil {
 		return "Failed to create scheduler", err
