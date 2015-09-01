@@ -15,8 +15,8 @@ type Service struct {
 	daemon.Daemon
 }
 
-func NewService(name, description string) (*Service, error) {
-	srv, err := daemon.New(name, description)
+func NewService(name, description string, dependencies []string) (*Service, error) {
+	srv, err := daemon.New(name, description, dependencies)
 	if err != nil {
 		return nil, err
 	}

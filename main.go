@@ -16,7 +16,7 @@ func main() {
 		log.SetLevel(log.InfoLevel)
 	}
 
-	service, err := NewService("metronome", "Scheduling tool on consul")
+	service, err := NewService("metronome", "Scheduling tool on consul", []string{"consul.service"})
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
