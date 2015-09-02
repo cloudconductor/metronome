@@ -25,8 +25,14 @@ func Push() (string, error) {
 
 	//	Unmarshal STDIN from consul
 	bytes, err := ioutil.ReadAll(os.Stdin)
+	if err != nil {
+		return "Following error has occurred while read STDIN", err
+	}
 	var receiveEvents []api.UserEvent
 	err = json.Unmarshal(bytes, &receiveEvents)
+	if err != nil {
+		return "Following error has occurred while unmarshal STDIN", err
+	}
 
 	//	Enqueue each event to event queue
 	eq := &queue.Queue{
