@@ -95,6 +95,7 @@ func taskTimeout(ch chan bool) {
 	for {
 		select {
 		case <-changeTask():
+		case <-startTask():
 		case <-time.After(time.Duration(TASK_TIMEOUT) * time.Second):
 			ch <- true
 		}
@@ -126,6 +127,33 @@ func changeTask() chan bool {
 			}
 
 			if prev.ID != now.ID || prev.No != now.No {
+				ch <- true
+				return
+			}
+		}
+	}(ch)
+
+	return ch
+}
+
+//	Trigger channel when start current task
+func startTask() chan bool {
+	ch := make(chan bool)
+	go func(chan bool) {
+		pq := &queue.Queue{
+			Client: util.Consul(),
+			Key:    PROGRESS_QUEUE_KEY,
+		}
+
+		for {
+			time.Sleep(1 * time.Second)
+			var et EventTask
+			if err := pq.FetchHead(&et); err != nil {
+				ch <- true
+				return
+			}
+
+			if r, err := getEventResult(et.ID); err != nil || r != nil {
 				ch <- true
 				return
 			}
