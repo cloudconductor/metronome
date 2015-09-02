@@ -14,6 +14,7 @@ import (
 
 const INDENT_WIDTH = 2
 
+//	Represent task.yml as golang structure
 type Schedule struct {
 	path         string
 	pattern      string
@@ -24,10 +25,12 @@ type Schedule struct {
 	Tasks        map[string]*task.Task
 }
 
+//	Represent default node in task.yml
 type TaskDefault struct {
 	Timeout int32
 }
 
+//	Set path of task.yml and pattern directory to all tasks and operations
 func (s *Schedule) PostUnmarshal(path string, pattern string) {
 	s.path = path
 	s.pattern = pattern
@@ -94,6 +97,7 @@ func indent(s string, n int) string {
 	return strings.Join(results, "\n")
 }
 
+//	Set environment variables from environment node in task.yml
 func (s *Schedule) setEnvironmentVariables() {
 	r := regexp.MustCompile(`\$[a-zA-Z0-9_-]+`)
 	for k, v := range s.Environments {

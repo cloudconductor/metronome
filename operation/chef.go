@@ -21,6 +21,7 @@ import (
 
 const BERKS_VENDOR_ERROR = 139
 
+//	Execute chef-solo with specified parameter
 type ChefOperation struct {
 	BaseOperation
 	RunList        []string `json:"run_list"`
@@ -36,25 +37,32 @@ func NewChefOperation(v json.RawMessage) *ChefOperation {
 }
 
 func (o *ChefOperation) Run(vars map[string]string) error {
+	//	Filter runlist by JSON file existance in roles directory
 	runlist := o.ensureRunList(o.parseRunList(o.RunList, vars))
 
+	//	Create attributes JSON for chef-solo
 	json, err := o.createJson(runlist, util.ParseMap(o.Attributes, vars))
 	if err != nil {
 		return err
 	}
 
+	//	Create configuration file for chef-solo
 	conf, err := o.createConf(vars)
 	if err != nil {
 		return err
 	}
 
+	//	Execute berkshelf to get depencency cookbooks
 	if err := o.executeBerkshelf(); err != nil {
 		return err
 	}
 
+	//	Execute chef-solo with configuration file and attribute JSON
 	return o.executeChef(conf, json)
 }
 
+//	Convert {{role}} in task.yml to array of individual role with 'all' role
+//	When role is 'web,ap', convert from 'role[{{role}}_deploy]' to role[all_deploy], role[web_deploy] and role[ap_deploy]
 func (o *ChefOperation) parseRunList(runlist []string, vars map[string]string) []string {
 	var results []string
 	for _, v := range runlist {
@@ -70,6 +78,7 @@ func (o *ChefOperation) parseRunList(runlist []string, vars map[string]string) [
 	return util.ParseArray(results, vars)
 }
 
+//	Filter runlist by JSON file existance in roles directory
 func (o *ChefOperation) ensureRunList(runlist []string) []string {
 	var results []string
 	r, _ := regexp.Compile("^role\\[(.*)\\]$")
@@ -88,16 +97,19 @@ func (o *ChefOperation) ensureRunList(runlist []string) []string {
 func (o *ChefOperation) createJson(runlist []string, overwriteAttributes map[string]interface{}) (string, error) {
 	var err error
 
+	//	Get cloudconductor/parameters from consul KVS and overwrite some attributes by specified parameter in task.yml
 	cloudconductor, err := getAttributes(overwriteAttributes)
 	if err != nil {
 		return "", err
 	}
 
+	//	Get cloudconductor/servers from consul KVS
 	servers, err := getServers()
 	if err != nil {
 		servers = make(map[string]interface{})
 	}
 
+	//	cloudconductor/patterns/
 	attributes, err := extractAttributes(cloudconductor)
 	if err != nil {
 		return "", err
@@ -111,6 +123,7 @@ func (o *ChefOperation) createJson(runlist []string, overwriteAttributes map[str
 }
 
 func getAttributes(overwriteAttributes map[string]interface{}) (map[string]interface{}, error) {
+	//	Get cloudconductor/parameters from consul KVS
 	var attributes map[string]interface{}
 	var c *api.Client = util.Consul()
 	kv, _, err := c.KV().Get("cloudconductor/parameters", &api.QueryOptions{})
@@ -124,6 +137,7 @@ func getAttributes(overwriteAttributes map[string]interface{}) (map[string]inter
 		attributes["cloudconductor"].(map[string]interface{})["patterns"] = make(map[string]interface{})
 	}
 
+	//	Overwrite some attributes by specified parameter in task.yml
 	if err := mergeAttributes(attributes, overwriteAttributes); err != nil {
 		return nil, err
 	}
@@ -134,6 +148,7 @@ func mergeAttributes(src, dst map[string]interface{}) error {
 	patterns := src["cloudconductor"].(map[string]interface{})["patterns"].(map[string]interface{})
 
 	for k, v := range dst {
+		//	Overwrite each pattern JSON by specified map
 		if patterns[k] == nil {
 			pattern := make(map[string]interface{})
 			pattern["user_attributes"] = make(map[string]interface{})
@@ -147,6 +162,7 @@ func mergeAttributes(src, dst map[string]interface{}) error {
 	return nil
 }
 
+//	Aggregate cloudconductor/servers/* and return it to output to attribute JSON
 func getServers() (map[string]interface{}, error) {
 	var c *api.Client = util.Consul()
 	consulServers, _, err := c.KV().List("cloudconductor/servers", &api.QueryOptions{})
@@ -165,6 +181,7 @@ func getServers() (map[string]interface{}, error) {
 	return servers, nil
 }
 
+//	Extract attributes to support node['pattern_name']['XXXX'] in chef recipes
 func extractAttributes(src map[string]interface{}) (map[string]interface{}, error) {
 	var results map[string]interface{}
 
@@ -179,23 +196,23 @@ func extractAttributes(src map[string]interface{}) (map[string]interface{}, erro
 }
 
 func writeJson(runlist []string, cloudconductor map[string]interface{}, servers map[string]interface{}, attributes map[string]interface{}) (string, error) {
+	//	Construct attribute json structure
 	m := make(map[string]interface{})
 	m["run_list"] = runlist
 	m["cloudconductor"] = cloudconductor["cloudconductor"]
 	m["cloudconductor"].(map[string]interface{})["servers"] = servers
 	mergo.MergeWithOverwrite(&m, attributes)
-
 	b, err := json.Marshal(m)
 	if err != nil {
 		return "", err
 	}
 
+	//	Output attribute JSON to temporary file
 	f, err := ioutil.TempFile("", "chef-node-json")
 	if err != nil {
 		return "", err
 	}
 	defer f.Close()
-
 	if _, err := f.Write(b); err != nil {
 		return "", err
 	}
@@ -204,21 +221,21 @@ func writeJson(runlist []string, cloudconductor map[string]interface{}, servers 
 }
 
 func (o *ChefOperation) createConf(vars map[string]string) (string, error) {
+	//	Overwrite configuration by user specified configuration in task.yml
+	m, err := o.defaultConfig()
+	if err != nil {
+		return "", err
+	}
+	if err := mergo.MergeWithOverwrite(&m, o.Configurations); err != nil {
+		return "", err
+	}
+
+	//	Output configuration to temporary file
 	f, err := ioutil.TempFile("", "chef-conf")
 	if err != nil {
 		return "", err
 	}
 	defer f.Close()
-
-	m, err := o.defaultConfig()
-	if err != nil {
-		return "", err
-	}
-
-	if err := mergo.MergeWithOverwrite(&m, o.Configurations); err != nil {
-		return "", err
-	}
-
 	for k, v := range m {
 		if _, err := f.WriteString(fmt.Sprintf("%s %s\n", k, convertRubyCode(v))); err != nil {
 			return "", err
@@ -229,6 +246,7 @@ func (o *ChefOperation) createConf(vars map[string]string) (string, error) {
 }
 
 func convertRubyCode(v interface{}) string {
+	//	Convert to appropriate format as ruby for chef configuration file
 	switch v.(type) {
 	case string:
 		if strings.HasPrefix(v.(string), ":") {
@@ -247,6 +265,7 @@ func convertRubyCode(v interface{}) string {
 	return ""
 }
 
+//	Return default configuration for chef-solo
 func (o *ChefOperation) defaultConfig() (map[string]interface{}, error) {
 	m := map[string]interface{}{
 		"ssl_verify_mode": ":verify_peer",
@@ -272,11 +291,13 @@ func (o *ChefOperation) defaultConfig() (map[string]interface{}, error) {
 }
 
 func (o *ChefOperation) executeBerkshelf() error {
+	//	Check Berksfile in target pattern
 	if !util.Exists(filepath.Join(o.patternDir(), "Berksfile")) {
 		log.Debug("chef: Skip berkshelf because Berksfile doesn't found in pattern directory")
 		return nil
 	}
 
+	//	Execute berkshelf and ignore specified error
 	log.Info("chef: Execute berkshelf")
 	cmd := exec.Command("berks", "vendor", "cookbooks")
 	cmd.Dir = o.patternDir()
@@ -299,11 +320,13 @@ func (o *ChefOperation) executeBerkshelf() error {
 }
 
 func (o *ChefOperation) executeChef(conf string, json string) error {
+	//	Delete temporary files automatically without debug mode
 	if !config.Debug {
 		defer os.Remove(conf)
 		defer os.Remove(json)
 	}
 
+	//	Execute chef with attribute JSON and configuration file
 	log.Infof("chef: Execute chef(conf: %s, json: %s)", conf, json)
 	cmd := exec.Command("chef-solo", "-c", conf, "-j", json)
 	cmd.Dir = o.patternDir()

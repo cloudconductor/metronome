@@ -90,6 +90,7 @@ func (s *Scheduler) polling(ch chan bool) error {
 	return nil
 }
 
+//	Trigger channel when current task has been reached timeout
 func taskTimeout(ch chan bool) {
 	for {
 		select {
@@ -100,6 +101,7 @@ func taskTimeout(ch chan bool) {
 	}
 }
 
+//	Trigger channel when change current task
 func changeTask() chan bool {
 	ch := make(chan bool)
 
@@ -174,6 +176,7 @@ func (s *Scheduler) registerServer() error {
 	return nil
 }
 
+//	Convert node name to address based on consul catalog
 func getAddress(node string) (string, error) {
 	nodes, _, err := util.Consul().Catalog().Nodes(&api.QueryOptions{})
 	if err != nil {
@@ -254,6 +257,7 @@ func (s *Scheduler) runTask(task EventTask) error {
 
 	log.Infof("Run task(Task: %s, ID: %s, No: %d, Service: %s, Tag: %s)", task.Task, task.ID, task.No, task.Service, task.Tag)
 
+	//	Run single task with result log
 	if err := task.WriteStartLog(s.node); err != nil {
 		return err
 	}
@@ -268,6 +272,7 @@ func (s *Scheduler) runTask(task EventTask) error {
 	return task.WriteFinishLog(s.node, status, b.String())
 }
 
+//	Finish current task when no node in consul catalog will execute current task
 func (s *Scheduler) finishTask(task EventTask) error {
 	log.Infof("Finish task(Task: %s, ID: %s, No: %d, Service: %s, Tag: %s)", task.Task, task.ID, task.No, task.Service, task.Tag)
 	pq := &queue.Queue{

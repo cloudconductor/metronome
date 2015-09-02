@@ -16,35 +16,45 @@ const CONF_PATH string = "/etc/metronome/config.yml"
 const VARIABLES_PATH string = "/etc/metronome/variables.yml"
 
 var (
+	//	user specified variables that can reference from task.yml with {{XXX}} format
 	UserVariables stringMapValue
 
+	//	Connection parameter for Consul server
 	Token              string
 	Hostname           string
 	Port               int
 	Protocol           string
 	InsecureSkipVerify bool
 
+	//	HTTP/HTTPS proxy settings
 	ProxyHost string
 	ProxyPort int
 	NoProxy   string
 
+	//	Type of service manager(systemd / init)
 	ServiceManager string
 
+	//	All paths of task.yml
 	Files []string
 
+	//	Instance role
 	Role string
 
+	//	Skip event that doesn't execute on any instance
 	Skippable bool
 
+	//	Enable debug output and features
 	Debug bool
 )
 
 func init() {
 	var files string
 
+	//	load user variables from file
 	UserVariables = loadUserVariables(VARIABLES_PATH)
 	flag.Var(&UserVariables, "var", "Specify user variables(ex. \"-var key1=value1 -var key2=value2\")")
 
+	//	load options from commandline parameter or file
 	flag.StringVar(&Token, "token", "", "Consul ACL token")
 	flag.StringVar(&Hostname, "host", "127.0.0.1", "Consul host")
 	flag.IntVar(&Port, "port", 8500, "Consul port")
@@ -90,6 +100,7 @@ func loadUserVariables(path string) map[string]string {
 	return vars
 }
 
+//	Create map structure when load variables automatically
 type stringMapValue map[string]string
 
 func (v *stringMapValue) String() string {
@@ -105,6 +116,7 @@ func (v *stringMapValue) Set(s string) error {
 	return nil
 }
 
+//	Set environment variables on this process
 func setEnvironmentVariables() {
 	if ProxyHost != "" {
 		proxy := "http://" + ProxyHost + ":" + strconv.Itoa(ProxyPort)
@@ -118,6 +130,7 @@ func setEnvironmentVariables() {
 	}
 }
 
+//	Return configuration for task.yml with {{config.XXXX}} format
 func GetValue(name string) string {
 	switch name {
 	case "token":

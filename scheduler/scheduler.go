@@ -34,6 +34,7 @@ func NewScheduler() (*Scheduler, error) {
 	return scheduler, nil
 }
 
+//	Load shedule information from all task.yml
 func (scheduler *Scheduler) load() error {
 	for _, path := range config.Files {
 		if path == "" {
@@ -63,6 +64,7 @@ func (scheduler *Scheduler) load() error {
 	return nil
 }
 
+//	Sort event by priority over all patterns
 func (scheduler *Scheduler) sortedEvents(name string) Events {
 	var events Events
 	for _, v := range scheduler.schedules {

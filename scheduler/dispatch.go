@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+//	Dispatch event immediately when execute metronome with dispatch subcommand
 func (scheduler *Scheduler) Dispatch(name string) error {
 	events := scheduler.sortedEvents(name)
 	if len(events) == 0 {

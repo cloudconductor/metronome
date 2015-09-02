@@ -7,6 +7,7 @@ import (
 	"github.com/imdario/mergo"
 )
 
+//	Parse {{XXXX}} to value by appropriate method depending on type of src
 func Parse(src interface{}, vars map[string]string) interface{} {
 	switch src := src.(type) {
 	default:
@@ -20,6 +21,7 @@ func Parse(src interface{}, vars map[string]string) interface{} {
 	}
 }
 
+//	Parse {{XXXX}} in string to value
 func ParseString(src string, vars map[string]string) string {
 	mergo.Merge(&vars, map[string]string(config.UserVariables))
 
@@ -45,6 +47,7 @@ func ParseString(src string, vars map[string]string) string {
 	return src
 }
 
+//	Parse {{XXXX}} in array of string to value
 func ParseArray(src []string, vars map[string]string) []string {
 	var results []string
 	for _, e := range src {
@@ -53,6 +56,7 @@ func ParseArray(src []string, vars map[string]string) []string {
 	return results
 }
 
+//	Parse {{XXXX}} in map to value
 func ParseMap(src map[string]interface{}, vars map[string]string) map[string]interface{} {
 	results := make(map[string]interface{})
 

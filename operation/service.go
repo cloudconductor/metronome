@@ -11,6 +11,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
+//	Start, stop, restart or other action on target service via service manager
 type ServiceOperation struct {
 	BaseOperation
 	Name   string
@@ -27,6 +28,7 @@ func (o *ServiceOperation) Run(vars map[string]string) error {
 	name := util.ParseString(o.Name, vars)
 	action := util.ParseString(o.Action, vars)
 
+	//	Switch method from service manager(SystemV init/systemd)
 	var cmd *exec.Cmd
 	switch config.ServiceManager {
 	case "init":

@@ -1,5 +1,6 @@
 package operation
 
+//	Extract common parameters and method from each operation
 type Operation interface {
 	String() string
 	SetPattern(path string, pattern string)

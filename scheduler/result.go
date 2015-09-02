@@ -17,6 +17,7 @@ type Result interface {
 	Key() string
 }
 
+//	Result of entire event
 type EventResult struct {
 	ID         string
 	Name       string
@@ -25,6 +26,7 @@ type EventResult struct {
 	FinishedAt time.Time
 }
 
+//	Result of task
 type TaskResult struct {
 	EventID    string
 	No         int
@@ -34,6 +36,7 @@ type TaskResult struct {
 	FinishedAt time.Time
 }
 
+//	Result of task on individual node
 type NodeTaskResult struct {
 	EventID    string
 	No         int
@@ -45,6 +48,7 @@ type NodeTaskResult struct {
 }
 
 func (r *EventResult) MarshalJSON() ([]byte, error) {
+	//	Marshal result that is excepted empty attributes to JSON format
 	var columns []string
 	columns = append(columns, fmt.Sprintf("\"ID\": \"%s\"", r.ID))
 	columns = append(columns, fmt.Sprintf("\"Name\": \"%s\"", r.Name))
@@ -59,6 +63,7 @@ func (r *EventResult) MarshalJSON() ([]byte, error) {
 }
 
 func (r *TaskResult) MarshalJSON() ([]byte, error) {
+	//	Marshal result that is excepted empty attributes to JSON format
 	var columns []string
 	columns = append(columns, fmt.Sprintf("\"EventID\": \"%s\"", r.EventID))
 	columns = append(columns, fmt.Sprintf("\"No\": %d", r.No))
@@ -74,6 +79,7 @@ func (r *TaskResult) MarshalJSON() ([]byte, error) {
 }
 
 func (r *NodeTaskResult) MarshalJSON() ([]byte, error) {
+	//	Marshal result that is excepted empty attributes to JSON format
 	var columns []string
 	columns = append(columns, fmt.Sprintf("\"EventID\": \"%s\"", r.EventID))
 	columns = append(columns, fmt.Sprintf("\"No\": %d", r.No))
@@ -109,6 +115,7 @@ func (r *TaskResult) Save() error {
 }
 
 func (r *NodeTaskResult) Save() error {
+	//	Save any result to consul KVS
 	if err := putResult(r); err != nil {
 		return err
 	}
@@ -133,6 +140,7 @@ func (r *NodeTaskResult) IsFinished() bool {
 }
 
 func (r *TaskResult) GetNodeResults() ([]NodeTaskResult, error) {
+	//	Collect all results on node that belongs with this task
 	var results []NodeTaskResult
 
 	prefix := EVENT_RESULT_KEY + "/" + r.EventID + "/" + strconv.Itoa(r.No)
@@ -142,6 +150,7 @@ func (r *TaskResult) GetNodeResults() ([]NodeTaskResult, error) {
 	}
 
 	for _, kv := range kvs {
+		//	Except log record on each node
 		node := strings.TrimPrefix(kv.Key, prefix)
 		if node == "" || strings.HasSuffix(node, "/log") {
 			continue
@@ -194,6 +203,7 @@ func getNodeTaskResult(id string, no int, node string) (*NodeTaskResult, error) 
 	return &result, err
 }
 
+//	Get any result from consul KVS
 func getResult(key string, result interface{}) (bool, error) {
 	kv, _, err := util.Consul().KV().Get(key, &api.QueryOptions{})
 	if err != nil {
@@ -210,6 +220,7 @@ func getResult(key string, result interface{}) (bool, error) {
 	return true, nil
 }
 
+//	Put any result to consul KVS with JSON format
 func putResult(result Result) error {
 	d, err := json.Marshal(result)
 	if err != nil {

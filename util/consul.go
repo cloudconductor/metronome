@@ -11,6 +11,7 @@ import (
 
 var consul *api.Client
 
+//	Create consul client with configuration that specified by command option
 func Consul() *api.Client {
 	if consul == nil {
 		c := api.DefaultConfig()
@@ -33,6 +34,7 @@ func Consul() *api.Client {
 	return consul
 }
 
+//	Return status that target node has conditional service and tag
 func HasCatalogRecord(node string, service string, tag string) bool {
 	c, _, err := Consul().Catalog().Node(node, &api.QueryOptions{})
 	if err != nil || c == nil {

@@ -34,6 +34,7 @@ func init() {
 }
 
 func UnmarshalOperations(d []byte, operations *[]Operation) error {
+	//	Unmarshal operations from tasks/XXXX/operations in task.yml
 	var result []Operation
 	var list []map[string]json.RawMessage
 	if err := json.Unmarshal(d, &list); err != nil {
@@ -46,6 +47,7 @@ func UnmarshalOperations(d []byte, operations *[]Operation) error {
 		}
 
 		for k, v := range m {
+			//	Create operation via factory
 			factory, ok := Operations[k]
 			if !ok {
 				return errors.New(fmt.Sprintf("Operation %s is not defined", k))

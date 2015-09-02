@@ -24,6 +24,8 @@ func init() {
 	rand.Seed(time.Now().Unix())
 }
 
+//	Enqueue item to the queue
+//	If conflict other process, wait random interval and retry it
 func (q *Queue) EnQueue(item interface{}) error {
 	for {
 		if err := q.enQueue(item); err != ErrUpdatedFromOther {
@@ -35,6 +37,8 @@ func (q *Queue) EnQueue(item interface{}) error {
 	}
 }
 
+//	Dequeue item from the queue
+//	If conflict other process, wait random interval and retry it
 func (q *Queue) DeQueue(item interface{}) (error, bool) {
 	for {
 		if err, found := q.deQueue(item); err != ErrUpdatedFromOther {
@@ -49,28 +53,27 @@ func (q *Queue) DeQueue(item interface{}) (error, bool) {
 func (q *Queue) enQueue(item interface{}) error {
 	var items []interface{}
 
+	//	Get current items from consul KVS
 	entry, _, err := q.Client.KV().Get(q.Key, nil)
 	if err != nil {
 		return err
 	}
-
+	//	Create empty value when first time
 	if entry == nil {
 		entry = &api.KVPair{Key: q.Key}
 	}
-
 	if len(entry.Value) > 0 {
 		if err := json.Unmarshal(entry.Value, &items); err != nil {
 			return err
 		}
 	}
 
+	//	Add item to the last of items and store new items to consul KVS
 	items = append(items, item)
-
 	entry.Value, err = json.Marshal(items)
 	if err != nil {
 		return err
 	}
-
 	if result, _, _ := q.Client.KV().CAS(entry, nil); !result {
 		return ErrUpdatedFromOther
 	}
@@ -80,6 +83,7 @@ func (q *Queue) enQueue(item interface{}) error {
 func (q *Queue) deQueue(item interface{}) (error, bool) {
 	var items []interface{}
 
+	//	Get current items from consul KVS
 	entry, _, err := q.Client.KV().Get(q.Key, nil)
 	if err != nil {
 		return err, false
@@ -87,38 +91,39 @@ func (q *Queue) deQueue(item interface{}) (error, bool) {
 	if entry == nil {
 		return nil, false
 	}
-
 	if len(entry.Value) > 0 {
 		if err := json.Unmarshal(entry.Value, &items); err != nil {
 			return err, false
 		}
 	}
 
+	//	return nil if queue is empty
 	if len(items) == 0 {
 		return nil, false
 	}
 
+	//	Get first item from the items
 	d, err := json.Marshal(items[0])
 	if err != nil {
 		return err, false
 	}
-
 	if err := json.Unmarshal(d, &item); err != nil {
 		return err, false
 	}
 
+	//	Remove first item and store new items to consul KVS
 	items = items[1:]
 	entry.Value, err = json.Marshal(items)
 	if err != nil {
 		return err, false
 	}
-
 	if result, _, _ := q.Client.KV().CAS(entry, nil); !result {
 		return ErrUpdatedFromOther, false
 	}
 	return nil, true
 }
 
+//	Get first item from the queue without removing it
 func (q *Queue) FetchHead(item interface{}) error {
 	var items []interface{}
 

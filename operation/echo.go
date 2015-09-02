@@ -7,6 +7,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
+//	Echo message to STDOUT
 type EchoOperation struct {
 	BaseOperation
 	message string

@@ -54,10 +54,12 @@ func (et EventTask) MarshalJSON() ([]byte, error) {
 }
 
 func (et *EventTask) Runnable(node string) bool {
+	//	Target node doesn't have conditional service or tag
 	if !util.HasCatalogRecord(node, et.Service, et.Tag) {
 		return false
 	}
 
+	//	Skip task when task had executed already
 	nodeResult, err := getNodeTaskResult(et.ID, et.No, node)
 	if err != nil {
 		return false
@@ -99,6 +101,7 @@ func (et *EventTask) IsFinished(ch chan bool) bool {
 	return true
 }
 
+//	Filter nodes by conditional service and tag
 func (et *EventTask) filterNodes(nodes []*api.Node) []*api.Node {
 	var results []*api.Node
 	for _, node := range nodes {
@@ -110,8 +113,8 @@ func (et *EventTask) filterNodes(nodes []*api.Node) []*api.Node {
 	return results
 }
 
+//	Run operations in task
 func (et *EventTask) Run(scheduler *Scheduler) error {
-	//	Run operations in task
 	t, found := scheduler.schedules[et.Pattern].Tasks[et.Task]
 	if !found {
 		return errors.New(fmt.Sprintf("Target task(%s) does not defined in %s\n", et.Task, et.Pattern))

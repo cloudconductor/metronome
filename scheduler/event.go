@@ -41,6 +41,7 @@ func (e *Event) SetPattern(path string, pattern string) {
 }
 
 func (e *Event) Run(scheduler *Scheduler) error {
+	//	Unify task list from task format or ordered_tasks format
 	var tasks []EventTask
 	if e.Task != "" {
 		tasks = []EventTask{
@@ -54,6 +55,7 @@ func (e *Event) Run(scheduler *Scheduler) error {
 		tasks = e.OrderedTasks
 	}
 
+	//	Execute each task exact order
 	for _, et := range tasks {
 		if err := et.Run(scheduler); err != nil {
 			return err
@@ -85,6 +87,7 @@ func (e Event) String() string {
 	return s
 }
 
+//	Sort methods while sort events by priority
 func (e Events) Len() int {
 	return len(e)
 }

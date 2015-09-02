@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/consul/api"
 )
 
+//	Trigger consul event with specified name
 type ConsulEventOperation struct {
 	BaseOperation
 	Name   string

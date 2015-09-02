@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/consul/api"
 )
 
+//	Get, put, or delete on the consul KVS
 type ConsulKVSOperation struct {
 	BaseOperation
 	Action string
@@ -39,6 +40,7 @@ func (o *ConsulKVSOperation) Run(vars map[string]string) error {
 }
 
 func (o *ConsulKVSOperation) get(vars map[string]string) error {
+	//	Store value that has been get to variables map
 	kv := &api.KVPair{
 		Key:   o.Key,
 		Value: []byte(o.Value),
