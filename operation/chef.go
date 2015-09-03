@@ -27,6 +27,7 @@ type ChefOperation struct {
 	RunList        []string `json:"run_list"`
 	Configurations map[string]interface{}
 	Attributes     map[string]interface{}
+	AttributeKeys  []string `json:"attribute_keys"`
 }
 
 func NewChefOperation(v json.RawMessage) *ChefOperation {
@@ -41,7 +42,7 @@ func (o *ChefOperation) Run(vars map[string]string) error {
 	runlist := o.ensureRunList(o.parseRunList(o.RunList, vars))
 
 	//	Create attributes JSON for chef-solo
-	json, err := o.createJson(runlist, util.ParseMap(o.Attributes, vars))
+	json, err := o.createJson(runlist, util.ParseArray(o.AttributeKeys, vars), util.ParseMap(o.Attributes, vars))
 	if err != nil {
 		return err
 	}
@@ -94,115 +95,56 @@ func (o *ChefOperation) ensureRunList(runlist []string) []string {
 	return results
 }
 
-func (o *ChefOperation) createJson(runlist []string, overwriteAttributes map[string]interface{}) (string, error) {
+func (o *ChefOperation) createJson(runlist []string, keys []string, overwriteAttributes map[string]interface{}) (string, error) {
 	var err error
 
-	//	Get cloudconductor/parameters from consul KVS and overwrite some attributes by specified parameter in task.yml
-	cloudconductor, err := getAttributes(overwriteAttributes)
+	//	Get attribute json from consul KVS and overwrite some attributes by specified parameter in task.yml
+	attributes, err := getAttributes(keys, overwriteAttributes)
 	if err != nil {
 		return "", err
 	}
 
-	//	Get cloudconductor/servers from consul KVS
-	servers, err := getServers()
-	if err != nil {
-		servers = make(map[string]interface{})
-	}
-
-	//	cloudconductor/patterns/
-	attributes, err := extractAttributes(cloudconductor)
-	if err != nil {
-		return "", err
-	}
-
-	json, err := writeJson(runlist, cloudconductor, servers, attributes)
+	json, err := writeJson(runlist, attributes)
 	if err != nil {
 		return "", err
 	}
 	return json, nil
 }
 
-func getAttributes(overwriteAttributes map[string]interface{}) (map[string]interface{}, error) {
-	//	Get cloudconductor/parameters from consul KVS
+func getAttributes(keys []string, overwriteAttributes map[string]interface{}) (map[string]interface{}, error) {
 	var attributes map[string]interface{}
 	var c *api.Client = util.Consul()
-	kv, _, err := c.KV().Get("cloudconductor/parameters", &api.QueryOptions{})
-	if err == nil && kv != nil {
-		if err := json.Unmarshal(kv.Value, &attributes); err != nil {
+	attributes = make(map[string]interface{})
+
+	//	Get attributes from consul KVS
+	for _, key := range keys {
+		list, _, err := c.KV().List(key, &api.QueryOptions{})
+		if err != nil {
 			return nil, err
 		}
-	} else {
-		attributes = make(map[string]interface{})
-		attributes["cloudconductor"] = make(map[string]interface{})
-		attributes["cloudconductor"].(map[string]interface{})["patterns"] = make(map[string]interface{})
+
+		for _, kv := range list {
+			var a map[string]interface{}
+			if err := json.Unmarshal(kv.Value, &a); err != nil {
+				return nil, err
+			}
+			if err := mergo.MergeWithOverwrite(&attributes, a); err != nil {
+				return nil, errors.New(fmt.Sprintf("Failed to merge attributes(%v)", err))
+			}
+		}
 	}
 
 	//	Overwrite some attributes by specified parameter in task.yml
-	if err := mergeAttributes(attributes, overwriteAttributes); err != nil {
+	if err := mergo.MergeWithOverwrite(&attributes, overwriteAttributes); err != nil {
 		return nil, err
 	}
 	return attributes, nil
 }
 
-func mergeAttributes(src, dst map[string]interface{}) error {
-	patterns := src["cloudconductor"].(map[string]interface{})["patterns"].(map[string]interface{})
-
-	for k, v := range dst {
-		//	Overwrite each pattern JSON by specified map
-		if patterns[k] == nil {
-			pattern := make(map[string]interface{})
-			pattern["user_attributes"] = make(map[string]interface{})
-			patterns[k] = pattern
-		}
-		m := patterns[k].(map[string]interface{})["user_attributes"].(map[string]interface{})
-		if err := mergo.MergeWithOverwrite(&m, v); err != nil {
-			return errors.New(fmt.Sprintf("Failed to merge attributes(%v)", err))
-		}
-	}
-	return nil
-}
-
-//	Aggregate cloudconductor/servers/* and return it to output to attribute JSON
-func getServers() (map[string]interface{}, error) {
-	var c *api.Client = util.Consul()
-	consulServers, _, err := c.KV().List("cloudconductor/servers", &api.QueryOptions{})
-	if err != nil {
-		return nil, err
-	}
-	servers := make(map[string]interface{})
-	for _, s := range consulServers {
-		node := strings.TrimPrefix(s.Key, "cloudconductor/servers/")
-		v := make(map[string]interface{})
-		if err := json.Unmarshal(s.Value, &v); err != nil {
-			return nil, err
-		}
-		servers[node] = v
-	}
-	return servers, nil
-}
-
-//	Extract attributes to support node['pattern_name']['XXXX'] in chef recipes
-func extractAttributes(src map[string]interface{}) (map[string]interface{}, error) {
-	var results map[string]interface{}
-
-	patterns := src["cloudconductor"].(map[string]interface{})["patterns"].(map[string]interface{})
-	for _, v := range patterns {
-		m := v.(map[string]interface{})["user_attributes"].(map[string]interface{})
-		if err := mergo.MergeWithOverwrite(&results, m); err != nil {
-			return nil, errors.New(fmt.Sprintf("Failed to merge attributes(%v)", err))
-		}
-	}
-	return results, nil
-}
-
-func writeJson(runlist []string, cloudconductor map[string]interface{}, servers map[string]interface{}, attributes map[string]interface{}) (string, error) {
+func writeJson(runlist []string, attributes map[string]interface{}) (string, error) {
 	//	Construct attribute json structure
-	m := make(map[string]interface{})
-	m["run_list"] = runlist
-	m["cloudconductor"] = cloudconductor["cloudconductor"]
-	m["cloudconductor"].(map[string]interface{})["servers"] = servers
-	mergo.MergeWithOverwrite(&m, attributes)
-	b, err := json.Marshal(m)
+	attributes["run_list"] = runlist
+	b, err := json.Marshal(attributes)
 	if err != nil {
 		return "", err
 	}
