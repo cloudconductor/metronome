@@ -3,14 +3,11 @@ package scheduler
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
-	"errors"
 	"io"
 	"metronome/config"
 	"metronome/queue"
 	"metronome/util"
 	"os"
-	"strings"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -20,7 +17,7 @@ import (
 const TASK_TIMEOUT = 1800
 
 func (s *Scheduler) Run() {
-	if err := s.connect(); err != nil {
+	if err := s.getNode(); err != nil {
 		panic(err)
 	}
 
@@ -163,60 +160,10 @@ func startTask() chan bool {
 	return ch
 }
 
-func (scheduler *Scheduler) connect() error {
+func (scheduler *Scheduler) getNode() error {
 	var err error
 	scheduler.node, err = os.Hostname()
-	if err != nil {
-		return err
-	}
-
-	return scheduler.registerServer()
-}
-
-func (s *Scheduler) registerServer() error {
-	var key = "cloudconductor/servers/" + s.node
-	var c *api.Client = util.Consul()
-	kv, _, err := c.KV().Get(key, &api.QueryOptions{})
-	if err != nil {
-		return err
-	}
-
-	if kv == nil {
-		kv = &api.KVPair{Key: key}
-	}
-
-	m := make(map[string]interface{})
-	m["roles"] = strings.Split(config.Role, ",")
-	m["private_ip"], err = getAddress(s.node)
-	if err != nil {
-		return err
-	}
-
-	kv.Value, err = json.Marshal(m)
-	if err != nil {
-		return err
-	}
-
-	if _, err := c.KV().Put(kv, &api.WriteOptions{}); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-//	Convert node name to address based on consul catalog
-func getAddress(node string) (string, error) {
-	nodes, _, err := util.Consul().Catalog().Nodes(&api.QueryOptions{})
-	if err != nil {
-		return "", err
-	}
-	for _, n := range nodes {
-		if n.Node == node {
-			return n.Address, nil
-		}
-	}
-
-	return "", errors.New("Current node does not found in consul catalog")
+	return err
 }
 
 func (s *Scheduler) dispatchEvent() error {
