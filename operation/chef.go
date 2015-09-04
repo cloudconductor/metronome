@@ -113,7 +113,8 @@ func (o *ChefOperation) createJson(runlist []string, keys []string, overwriteAtt
 	//	Get attribute json from consul KVS and overwrite some attributes by specified parameter in task.yml
 	attributes, err := getAttributes(keys, overwriteAttributes)
 	if err != nil {
-		return "", err
+		//	Execute chef without attributes when consul hasn't started
+		attributes = make(map[string]interface{})
 	}
 
 	json, err := writeJson(runlist, attributes)
