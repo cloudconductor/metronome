@@ -14,14 +14,15 @@ import (
 	"github.com/hashicorp/consul/api"
 )
 
-const TASK_TIMEOUT = 1800
+const TASK_TIMEOUT_WITHOUT_START = 60
+const TASK_TIMEOUT = 3600
 
 func (s *Scheduler) Run() {
 	if err := s.getNode(); err != nil {
 		panic(err)
 	}
 
-	ch := make(chan bool)
+	ch := make(chan EventTask)
 	go taskTimeout(ch)
 	for {
 		time.Sleep(1 * time.Second)
@@ -40,7 +41,7 @@ func (s *Scheduler) Run() {
 	}
 }
 
-func (s *Scheduler) polling(ch chan bool) error {
+func (s *Scheduler) polling(ch chan EventTask) error {
 	//	Create critical section by consul lock
 	l, err := util.Consul().LockKey(LOCK_KEY)
 	if err != nil {
@@ -88,19 +89,44 @@ func (s *Scheduler) polling(ch chan bool) error {
 }
 
 //	Trigger channel when current task has been reached timeout
-func taskTimeout(ch chan bool) {
+func taskTimeout(ch chan EventTask) {
+	var prev EventTask
+	var now EventTask
 	for {
+		time.Sleep(1 * time.Second)
+		pq := &queue.Queue{
+			Client: util.Consul(),
+			Key:    PROGRESS_QUEUE_KEY,
+		}
+
+		//	Wait until task has dispatched
+		if err := pq.FetchHead(&now); err != nil || now.ID == "" || prev.ID == now.ID && prev.No == now.No {
+			continue
+		}
+		prev = now
+
+		//	Wait until current task has started on any node or timeout
+		cancel := make(chan bool)
 		select {
-		case <-changeTask():
-		case <-startTask():
+		case <-startTask(now, cancel):
+		case <-time.After(TASK_TIMEOUT_WITHOUT_START * time.Second):
+			cancel <- true
+			ch <- now
+			continue
+		}
+
+		//	Wait until current task has finished or timeout
+		select {
+		case <-changeTask(now, cancel):
 		case <-time.After(time.Duration(TASK_TIMEOUT) * time.Second):
-			ch <- true
+			cancel <- true
+			ch <- now
 		}
 	}
 }
 
 //	Trigger channel when change current task
-func changeTask() chan bool {
+func changeTask(et EventTask, cancel chan bool) chan bool {
 	ch := make(chan bool)
 
 	go func(chan bool) {
@@ -109,21 +135,23 @@ func changeTask() chan bool {
 			Key:    PROGRESS_QUEUE_KEY,
 		}
 
-		var prev EventTask
-		if err := pq.FetchHead(&prev); err != nil {
-			ch <- true
-			return
-		}
-
 		for {
 			time.Sleep(1 * time.Second)
+			//	Exit when cancel channel has signalled
+			select {
+			case <-cancel:
+				return
+			default:
+			}
+
+			//  Send signal to change task channel when current task has been changed
 			var now EventTask
 			if err := pq.FetchHead(&now); err != nil {
 				ch <- true
 				return
 			}
 
-			if prev.ID != now.ID || prev.No != now.No {
+			if et.ID != now.ID || et.No != now.No {
 				ch <- true
 				return
 			}
@@ -134,23 +162,20 @@ func changeTask() chan bool {
 }
 
 //	Trigger channel when start current task
-func startTask() chan bool {
+func startTask(et EventTask, cancel chan bool) chan bool {
 	ch := make(chan bool)
 	go func(chan bool) {
-		pq := &queue.Queue{
-			Client: util.Consul(),
-			Key:    PROGRESS_QUEUE_KEY,
-		}
-
 		for {
 			time.Sleep(1 * time.Second)
-			var et EventTask
-			if err := pq.FetchHead(&et); err != nil {
-				ch <- true
+			//	Exit when cancel channel has signalled
+			select {
+			case <-cancel:
 				return
+			default:
 			}
 
-			if r, err := getEventResult(et.ID); err != nil || r != nil {
+			//	Send signal to start task channel when task result has been written
+			if r, err := getTaskResult(et.ID, et.No); err != nil || r != nil {
 				ch <- true
 				return
 			}
@@ -268,20 +293,26 @@ func (s *Scheduler) finishTask(task EventTask) error {
 	//	Collect task results over all nodes
 	status := "success"
 	if len(nodeResults) == 0 {
-		status = "skip"
+		if task.Skippable {
+			status = "skip"
+		} else {
+			status = "timeout"
+		}
 	}
+
 	for _, nr := range nodeResults {
 		if nr.Status == "error" {
 			status = "error"
-			// remove following tasks in progress task queue when some error has been occurred
-			pq.Clear()
 			break
 		}
 		if nr.Status == "inprogress" {
 			status = "timeout"
-			// remove following tasks in progress task queue when timeout has been occurred
-			pq.Clear()
 		}
+	}
+
+	if status == "error" || status == "timeout" {
+		// remove following tasks in progress task queue when some error occured or task has reached timeout
+		pq.Clear()
 	}
 
 	//	Log finishing task as TaskResult on KVS

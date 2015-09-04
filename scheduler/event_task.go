@@ -70,11 +70,14 @@ func (et *EventTask) Runnable(node string) bool {
 	return true
 }
 
-func (et *EventTask) IsFinished(ch chan bool) bool {
+func (et *EventTask) IsFinished(ch chan EventTask) bool {
 	//	Finished task when timeout has occurred
 	select {
-	case <-ch:
-		return true
+	case timeout := <-ch:
+		if et.ID == timeout.ID && et.No == timeout.No {
+			log.Warnf("Task has been reached timeout(Task: %s, ID: %s, No: %d, Service: %s, Tag: %s)", et.Task, et.ID, et.No, et.Service, et.Tag)
+			return true
+		}
 	default:
 	}
 
