@@ -71,7 +71,7 @@ func init() {
 
 	flag.StringVar(&Role, "role", "", "Role names of self instance(ex. \"-role web, ap\")")
 
-	flag.BoolVar(&Skippable, "skippable", true, "Skip task which isn't needed by anyone")
+	flag.BoolVar(&Skippable, "skippable", true, "Skip task which isn't needed by anyone(default: true)")
 
 	flag.BoolVar(&Debug, "debug", false, "Debug mode enabled(default: false)")
 
