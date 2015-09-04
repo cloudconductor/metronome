@@ -65,7 +65,7 @@ func (s *Scheduler) polling(ch chan bool) error {
 		log.Debug("-------- Progress Task Queue --------")
 		nodes, _, _ := util.Consul().Catalog().Nodes(&api.QueryOptions{})
 		for _, et := range eventTasks {
-			log.Debugf("Task: %s, %s, %s", et.Task, et.Service, et.Tag)
+			log.Debugf("Task: %s, %s, %s, %s", et.Pattern, et.Task, et.Service, et.Tag)
 			for _, n := range nodes {
 				log.Debugf("%s: %t", n.Node, et.Runnable(n.Node))
 			}
