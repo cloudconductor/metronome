@@ -88,6 +88,7 @@ func (et *EventTask) IsFinished(ch chan EventTask) bool {
 
 	filteredNodes := et.filterNodes(nodes)
 	if len(filteredNodes) == 0 {
+		//	Finished task when skippable task that hasn't been occurred on any node
 		if et.Skippable {
 			log.Warnf("Skip task(%s)", et.String())
 			return true
@@ -95,6 +96,7 @@ func (et *EventTask) IsFinished(ch chan EventTask) bool {
 		return false
 	}
 
+	//	Wait for finishing tasks on target node
 	for _, node := range filteredNodes {
 		result, err := getNodeTaskResult(et.ID, et.No, node.Node)
 		if err != nil || result == nil || !result.IsFinished() {
