@@ -42,15 +42,15 @@ func (et *EventTask) UnmarshalJSON(d []byte) error {
 
 func (et EventTask) MarshalJSON() ([]byte, error) {
 	et.Skippable = config.Skippable
-	var columns []string
-	columns = append(columns, fmt.Sprintf("\"pattern\": \"%s\"", et.Pattern))
-	columns = append(columns, fmt.Sprintf("\"id\": \"%s\"", et.ID))
-	columns = append(columns, fmt.Sprintf("\"no\": %d", et.No))
-	columns = append(columns, fmt.Sprintf("\"service\": \"%s\"", et.Service))
-	columns = append(columns, fmt.Sprintf("\"tag\": \"%s\"", et.Tag))
-	columns = append(columns, fmt.Sprintf("\"task\": \"%s\"", et.Task))
-	columns = append(columns, fmt.Sprintf("\"skippable\": %s", strconv.FormatBool(et.Skippable)))
-	return []byte(fmt.Sprintf("{ %s }", strings.Join(columns, ","))), nil
+	var fields []string
+	fields = append(fields, fmt.Sprintf("\"pattern\": \"%s\"", et.Pattern))
+	fields = append(fields, fmt.Sprintf("\"id\": \"%s\"", et.ID))
+	fields = append(fields, fmt.Sprintf("\"no\": %d", et.No))
+	fields = append(fields, fmt.Sprintf("\"service\": \"%s\"", et.Service))
+	fields = append(fields, fmt.Sprintf("\"tag\": \"%s\"", et.Tag))
+	fields = append(fields, fmt.Sprintf("\"task\": \"%s\"", et.Task))
+	fields = append(fields, fmt.Sprintf("\"skippable\": %s", strconv.FormatBool(et.Skippable)))
+	return []byte(fmt.Sprintf("{ %s }", strings.Join(fields, ","))), nil
 }
 
 func (et *EventTask) Runnable(node string) bool {

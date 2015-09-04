@@ -49,49 +49,49 @@ type NodeTaskResult struct {
 
 func (r *EventResult) MarshalJSON() ([]byte, error) {
 	//	Marshal result that is excepted empty attributes to JSON format
-	var columns []string
-	columns = append(columns, fmt.Sprintf("\"ID\": \"%s\"", r.ID))
-	columns = append(columns, fmt.Sprintf("\"Name\": \"%s\"", r.Name))
-	columns = append(columns, fmt.Sprintf("\"Status\": \"%s\"", r.Status))
+	var fields []string
+	fields = append(fields, fmt.Sprintf("\"ID\": \"%s\"", r.ID))
+	fields = append(fields, fmt.Sprintf("\"Name\": \"%s\"", r.Name))
+	fields = append(fields, fmt.Sprintf("\"Status\": \"%s\"", r.Status))
 	if !r.StartedAt.IsZero() {
-		columns = append(columns, fmt.Sprintf("\"StartedAt\": \"%s\"", r.StartedAt.Format(time.RFC3339)))
+		fields = append(fields, fmt.Sprintf("\"StartedAt\": \"%s\"", r.StartedAt.Format(time.RFC3339)))
 	}
 	if !r.FinishedAt.IsZero() {
-		columns = append(columns, fmt.Sprintf("\"FinishedAt\": \"%s\"", r.FinishedAt.Format(time.RFC3339)))
+		fields = append(fields, fmt.Sprintf("\"FinishedAt\": \"%s\"", r.FinishedAt.Format(time.RFC3339)))
 	}
-	return []byte(fmt.Sprintf("{ %s }", strings.Join(columns, ","))), nil
+	return []byte(fmt.Sprintf("{ %s }", strings.Join(fields, ","))), nil
 }
 
 func (r *TaskResult) MarshalJSON() ([]byte, error) {
 	//	Marshal result that is excepted empty attributes to JSON format
-	var columns []string
-	columns = append(columns, fmt.Sprintf("\"EventID\": \"%s\"", r.EventID))
-	columns = append(columns, fmt.Sprintf("\"No\": %d", r.No))
-	columns = append(columns, fmt.Sprintf("\"Name\": \"%s\"", r.Name))
-	columns = append(columns, fmt.Sprintf("\"Status\": \"%s\"", r.Status))
+	var fields []string
+	fields = append(fields, fmt.Sprintf("\"EventID\": \"%s\"", r.EventID))
+	fields = append(fields, fmt.Sprintf("\"No\": %d", r.No))
+	fields = append(fields, fmt.Sprintf("\"Name\": \"%s\"", r.Name))
+	fields = append(fields, fmt.Sprintf("\"Status\": \"%s\"", r.Status))
 	if !r.StartedAt.IsZero() {
-		columns = append(columns, fmt.Sprintf("\"StartedAt\": \"%s\"", r.StartedAt.Format(time.RFC3339)))
+		fields = append(fields, fmt.Sprintf("\"StartedAt\": \"%s\"", r.StartedAt.Format(time.RFC3339)))
 	}
 	if !r.FinishedAt.IsZero() {
-		columns = append(columns, fmt.Sprintf("\"FinishedAt\": \"%s\"", r.FinishedAt.Format(time.RFC3339)))
+		fields = append(fields, fmt.Sprintf("\"FinishedAt\": \"%s\"", r.FinishedAt.Format(time.RFC3339)))
 	}
-	return []byte(fmt.Sprintf("{ %s }", strings.Join(columns, ","))), nil
+	return []byte(fmt.Sprintf("{ %s }", strings.Join(fields, ","))), nil
 }
 
 func (r *NodeTaskResult) MarshalJSON() ([]byte, error) {
 	//	Marshal result that is excepted empty attributes to JSON format
-	var columns []string
-	columns = append(columns, fmt.Sprintf("\"EventID\": \"%s\"", r.EventID))
-	columns = append(columns, fmt.Sprintf("\"No\": %d", r.No))
-	columns = append(columns, fmt.Sprintf("\"Node\": \"%s\"", r.Node))
-	columns = append(columns, fmt.Sprintf("\"Status\": \"%s\"", r.Status))
+	var fields []string
+	fields = append(fields, fmt.Sprintf("\"EventID\": \"%s\"", r.EventID))
+	fields = append(fields, fmt.Sprintf("\"No\": %d", r.No))
+	fields = append(fields, fmt.Sprintf("\"Node\": \"%s\"", r.Node))
+	fields = append(fields, fmt.Sprintf("\"Status\": \"%s\"", r.Status))
 	if !r.StartedAt.IsZero() {
-		columns = append(columns, fmt.Sprintf("\"StartedAt\": \"%s\"", r.StartedAt.Format(time.RFC3339)))
+		fields = append(fields, fmt.Sprintf("\"StartedAt\": \"%s\"", r.StartedAt.Format(time.RFC3339)))
 	}
 	if !r.FinishedAt.IsZero() {
-		columns = append(columns, fmt.Sprintf("\"FinishedAt\": \"%s\"", r.FinishedAt.Format(time.RFC3339)))
+		fields = append(fields, fmt.Sprintf("\"FinishedAt\": \"%s\"", r.FinishedAt.Format(time.RFC3339)))
 	}
-	return []byte(fmt.Sprintf("{ %s }", strings.Join(columns, ","))), nil
+	return []byte(fmt.Sprintf("{ %s }", strings.Join(fields, ","))), nil
 }
 
 func (r *EventResult) Key() string {
