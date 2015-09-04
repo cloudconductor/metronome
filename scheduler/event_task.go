@@ -75,7 +75,7 @@ func (et *EventTask) IsFinished(ch chan EventTask) bool {
 	select {
 	case timeout := <-ch:
 		if et.ID == timeout.ID && et.No == timeout.No {
-			log.Warnf("Task has been reached timeout(Task: %s, ID: %s, No: %d, Service: %s, Tag: %s)", et.Task, et.ID, et.No, et.Service, et.Tag)
+			log.Errorf("Task has been reached timeout(%s)", et.String())
 			return true
 		}
 	default:
@@ -89,7 +89,7 @@ func (et *EventTask) IsFinished(ch chan EventTask) bool {
 	filteredNodes := et.filterNodes(nodes)
 	if len(filteredNodes) == 0 {
 		if et.Skippable {
-			log.Warnf("Skip task(Task: %s, ID: %s, No: %d, Service: %s, Tag: %s)", et.Task, et.ID, et.No, et.Service, et.Tag)
+			log.Warnf("Skip task(%s)", et.String())
 			return true
 		}
 		return false
@@ -185,4 +185,15 @@ func (et *EventTask) WriteFinishLog(node string, status string, log string) erro
 	nodeResult.Log = log
 
 	return nodeResult.Save()
+}
+
+func (et EventTask) String() string {
+	var fields []string
+	fields = append(fields, fmt.Sprintf("Pattern: %s", et.Pattern))
+	fields = append(fields, fmt.Sprintf("ID: %s", et.ID))
+	fields = append(fields, fmt.Sprintf("No: %d", et.No))
+	fields = append(fields, fmt.Sprintf("Service: %s", et.Service))
+	fields = append(fields, fmt.Sprintf("Tag: %s", et.Tag))
+	fields = append(fields, fmt.Sprintf("Task: %s", et.Task))
+	return strings.Join(fields, ", ")
 }

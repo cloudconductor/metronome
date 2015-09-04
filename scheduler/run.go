@@ -66,7 +66,7 @@ func (s *Scheduler) polling(ch chan EventTask) error {
 		log.Debug("-------- Progress Task Queue --------")
 		nodes, _, _ := util.Consul().Catalog().Nodes(&api.QueryOptions{})
 		for _, et := range eventTasks {
-			log.Debugf("Task: %s, %s, %s, %s", et.Pattern, et.Task, et.Service, et.Tag)
+			log.Debug(et.String())
 			for _, n := range nodes {
 				log.Debugf("%s: %t", n.Node, et.Runnable(n.Node))
 			}
@@ -83,7 +83,7 @@ func (s *Scheduler) polling(ch chan EventTask) error {
 	case eventTasks[0].IsFinished(ch):
 		return s.finishTask(eventTasks[0])
 	default:
-		log.Debugf("Wait a task will have been finished by other instance(Task: %s, Service: %s, Tag: %s)", eventTasks[0].Task, eventTasks[0].Service, eventTasks[0].Tag)
+		log.Debugf("Wait a task will have been finished by other instance(%s)", eventTasks[0].String())
 	}
 	return nil
 }
@@ -255,7 +255,7 @@ func (s *Scheduler) runTask(task EventTask) error {
 	writer := io.MultiWriter(&b, os.Stdout)
 	log.SetOutput(writer)
 
-	log.Infof("Run task(Task: %s, ID: %s, No: %d, Service: %s, Tag: %s)", task.Task, task.ID, task.No, task.Service, task.Tag)
+	log.Infof("Run task(%s)", task.String())
 
 	//	Run single task with result log
 	if err := task.WriteStartLog(s.node); err != nil {
@@ -274,7 +274,7 @@ func (s *Scheduler) runTask(task EventTask) error {
 
 //	Finish current task when no node in consul catalog will execute current task
 func (s *Scheduler) finishTask(task EventTask) error {
-	log.Infof("Finish task(Task: %s, ID: %s, No: %d, Service: %s, Tag: %s)", task.Task, task.ID, task.No, task.Service, task.Tag)
+	log.Infof("Finish task(%s)", task.String())
 	pq := &queue.Queue{
 		Client: util.Consul(),
 		Key:    PROGRESS_QUEUE_KEY,
