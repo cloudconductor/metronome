@@ -20,14 +20,9 @@ type Schedule struct {
 	pattern      string
 	Environments map[string]string
 	Variables    map[string]string
-	Default      TaskDefault
+	Default      map[string]interface{}
 	Events       map[string]*Event
 	Tasks        map[string]*task.Task
-}
-
-//	Represent default node in task.yml
-type TaskDefault struct {
-	Timeout int32
 }
 
 //	Set path of task.yml and pattern directory to all tasks and operations
@@ -41,10 +36,17 @@ func (s *Schedule) PostUnmarshal(path string, pattern string) {
 	for k, t := range s.Tasks {
 		t.Name = k
 		if t.Timeout == 0 {
-			t.Timeout = s.Default.Timeout
+			t.Timeout = int32(s.Default["timeout"].(float64))
 		}
 
 		t.SetPattern(path, pattern)
+		for _, o := range t.Operations {
+			if m, ok := s.Default[o.String()]; ok {
+				if v, ok := m.(map[string]interface{}); ok {
+					o.SetDefault(v)
+				}
+			}
+		}
 	}
 
 	if s.Variables == nil {

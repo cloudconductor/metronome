@@ -78,9 +78,9 @@ func (scheduler *Scheduler) sortedEvents(name string) Events {
 	return events
 }
 
-func taskDefault() TaskDefault {
-	return TaskDefault{
-		Timeout: 1800,
+func taskDefault() map[string]interface{} {
+	return map[string]interface{}{
+		"timeout": float64(1800),
 	}
 }
 

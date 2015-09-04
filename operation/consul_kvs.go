@@ -25,6 +25,9 @@ func NewConsulKVSOperation(v json.RawMessage) *ConsulKVSOperation {
 	return o
 }
 
+func (o *ConsulKVSOperation) SetDefault(m map[string]interface{}) {
+}
+
 func (o *ConsulKVSOperation) Run(vars map[string]string) error {
 	switch o.Action {
 	case "get":

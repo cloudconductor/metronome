@@ -19,6 +19,9 @@ func NewEchoOperation(v json.RawMessage) *EchoOperation {
 	return o
 }
 
+func (o *EchoOperation) SetDefault(m map[string]interface{}) {
+}
+
 func (o *EchoOperation) Run(vars map[string]string) error {
 	log.Info("echo: " + util.ParseString(o.message, vars))
 	return nil

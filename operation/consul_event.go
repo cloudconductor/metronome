@@ -19,6 +19,9 @@ type ConsulEventOperation struct {
 	}
 }
 
+func (o *ConsulEventOperation) SetDefault(m map[string]interface{}) {
+}
+
 func NewConsulEventOperation(v json.RawMessage) *ConsulEventOperation {
 	o := &ConsulEventOperation{}
 	json.Unmarshal(v, &o)

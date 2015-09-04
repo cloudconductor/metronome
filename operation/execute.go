@@ -26,6 +26,9 @@ func NewExecuteOperation(v json.RawMessage) *ExecuteOperation {
 	return o
 }
 
+func (o *ExecuteOperation) SetDefault(m map[string]interface{}) {
+}
+
 func (o *ExecuteOperation) Run(vars map[string]string) error {
 	cmd := &exec.Cmd{}
 	cmd.Dir = filepath.Dir(o.path)

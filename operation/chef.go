@@ -37,6 +37,18 @@ func NewChefOperation(v json.RawMessage) *ChefOperation {
 	return o
 }
 
+func (o *ChefOperation) SetDefault(m map[string]interface{}) {
+	if len(o.AttributeKeys) == 0 {
+		if v, ok := m["attribute_keys"]; ok {
+			if keys, ok := v.([]interface{}); ok {
+				for _, key := range keys {
+					o.AttributeKeys = append(o.AttributeKeys, key.(string))
+				}
+			}
+		}
+	}
+}
+
 func (o *ChefOperation) Run(vars map[string]string) error {
 	//	Filter runlist by JSON file existance in roles directory
 	runlist := o.ensureRunList(o.parseRunList(o.RunList, vars))

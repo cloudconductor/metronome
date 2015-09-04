@@ -4,6 +4,7 @@ package operation
 type Operation interface {
 	String() string
 	SetPattern(path string, pattern string)
+	SetDefault(m map[string]interface{})
 	Run(vars map[string]string) error
 }
 
