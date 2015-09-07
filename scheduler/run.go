@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/consul/api"
 )
 
-const TASK_TIMEOUT_WITHOUT_START = 60
+const TASK_TIMEOUT_WITHOUT_START = 120
 const TASK_TIMEOUT = 3600
 
 func (s *Scheduler) Run() {
