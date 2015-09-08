@@ -44,10 +44,6 @@ func (o *ConsulKVSOperation) Run(vars map[string]string) error {
 
 func (o *ConsulKVSOperation) get(vars map[string]string) error {
 	//	Store value that has been get to variables map
-	kv := &api.KVPair{
-		Key:   o.Key,
-		Value: []byte(o.Value),
-	}
 	kv, _, err := util.Consul().KV().Get(o.Key, &api.QueryOptions{})
 	vars[o.Name] = string(kv.Value)
 	log.Infof("Get %s from %s and store to %s", kv.Value, kv.Key, o.Name)
