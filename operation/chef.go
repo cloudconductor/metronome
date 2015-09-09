@@ -291,7 +291,13 @@ func (o *ChefOperation) executeChef(conf string, json string) error {
 	env = append(env, "ROLE="+config.Role)
 	cmd.Env = env
 	out, err := cmd.CombinedOutput()
-	log.Debug(string(out))
+	if err != nil {
+		log.Error("Chef STDOUT")
+		log.Error(string(out))
+	} else {
+		log.Debug("Chef STDOUT")
+		log.Debug(string(out))
+	}
 	return err
 }
 
