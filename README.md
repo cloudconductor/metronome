@@ -9,3 +9,6 @@ Metronome can manage these order with configuration file and event queuing syste
 First, when a consul has received event, the event handler on consul trigger metronome with push subcommand, and metronome enqueue received event to event queue on consul KVS.
 Metronome is polling event from event queue and dispatch it to the progress task queue with filtering condition that contains service and tag that specified by configuration file.
 Each server fetch head task of progress task queue and execute operation if qualified its filter, other servers wait for finishing these operation as it fetch first task.
+
+- [[User Manual(en)]]
+- [[Scheduling file format(en)]]
