@@ -1,6 +1,6 @@
-Metronome is scheduling tool over all servers in consul cluster.
+Metronome is scheduling tool for ordering event over members in consul cluster.
 
-An order of processing on multiple servers is important when create system that is structured from multiple servers.
+When event is sent to consul cluster, Each server in the cluster will start processing parallel, But an order of processing over multiple servers is important when create system that is structured from multiple servers.
 For example, all database servers should have been configured before application server, and load balancer will accept request from client after all inner servers have been ready.
 Metronome can manage these order with configuration file and event queuing system on consul KVS.
 
