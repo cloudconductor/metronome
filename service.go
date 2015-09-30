@@ -4,11 +4,13 @@ import (
 	"flag"
 	"fmt"
 	"metronome/scheduler"
+	"metronome/util"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/takama/daemon"
 )
 
@@ -47,8 +49,10 @@ func (service *Service) Manage() (string, error) {
 		case "dispatch":
 			return dispatch(flag.Args()[1])
 		case "version":
+			log.SetFormatter(&util.SimpleFormatter{})
 			return fmt.Sprintf("metronome %s\n", Version), nil
 		default:
+			log.SetFormatter(&util.SimpleFormatter{})
 			return usage, nil
 		}
 	}

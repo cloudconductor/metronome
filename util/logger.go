@@ -19,3 +19,11 @@ func (f *LogFormatter) Format(entry *log.Entry) ([]byte, error) {
 	}
 	return []byte(fmt.Sprintf("%s [%-5s] %s\n", time, level, entry.Message)), nil
 }
+
+type SimpleFormatter struct {
+}
+
+//	Return just message
+func (f *SimpleFormatter) Format(entry *log.Entry) ([]byte, error) {
+	return []byte(entry.Message), nil
+}
