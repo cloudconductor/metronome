@@ -28,7 +28,7 @@ func NewService(name, description string, dependencies []string) (*Service, erro
 }
 
 func (service *Service) Manage() (string, error) {
-	usage := "Usage: metronome install | remove | start | stop | status | agent"
+	usage := "Usage: metronome install | remove | start | stop | status | agent\n"
 
 	if flag.NArg() > 0 {
 		switch flag.Args()[0] {
