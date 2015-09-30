@@ -46,6 +46,8 @@ func (service *Service) Manage() (string, error) {
 			return scheduler.Push()
 		case "dispatch":
 			return dispatch(flag.Args()[1])
+		case "version":
+			return fmt.Sprintf("metronome %s\n", Version), nil
 		default:
 			return usage, nil
 		}
