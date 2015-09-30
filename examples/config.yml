@@ -1,0 +1,6 @@
+host: localhost
+port: 8501
+token: '9IJscfKfSbKw88nqYWZ3jQ=='
+insecure-skip-verify: true
+files: /opt/cloudconductor/patterns/tomcat_cluster_pattern/task.yml,/opt/cloudconductor/patterns/amanda_pattern/task.yml,/opt/cloudconductor/task.yml
+role: lb
