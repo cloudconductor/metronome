@@ -52,6 +52,6 @@ Contact
 
 For more information: <http://cloudconductor.org/>
 
-Report issues and requests: <https://github.com/cloudconductor/cloud_conductor/issues>
+Report issues and requests: <https://github.com/cloudconductor/metronome/issues>
 
 Send feedback to: <ccndctr@gmail.com>
