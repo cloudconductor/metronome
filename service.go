@@ -19,7 +19,7 @@ type Service struct {
 }
 
 func NewService(name, description string, dependencies []string) (*Service, error) {
-	srv, err := daemon.New(name, description, dependencies)
+	srv, err := daemon.New(name, description, dependencies...)
 	if err != nil {
 		return nil, err
 	}
